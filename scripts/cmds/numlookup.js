@@ -4,10 +4,11 @@ module.exports = {
   config: {
     name: "numlookup",
     version: "1.0",
+    aliases: ["nlu"],
     author: "SiAM",
     countDown: 10,
     role: 0,
-    category: "Utility",
+    category: "utility",
     ShortDescription: "Looks up phone number information.",
     LongDescription: "Provides carrier and potential Facebook ID information for a given phone number.",
     guide: {

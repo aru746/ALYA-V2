@@ -1,56 +1,38 @@
 const axios = require("axios");
-const FormData = require("form-data");
+
+const apikey = "66e0cfbb-62b8-4829-90c7-c78cacc72ae2";
 
 module.exports = {
   config: {
     name: "imgbb",
-    aliases: ["i"],
     version: "1.0",
-    author: "xnil6x",
-    countDown: 5,
-    role: 0,
-    description: {
-      en: "Upload image(s) to imgbb"
-    },
-    category: "uploader",
-    guide: {
-      en: "{pn} (reply to one or more images)"
-    }
+    author: "nexo_here",
+    category: "imagine",
+    shortDescription: "Upload replied image to imgbb & get link",
+    longDescription: "Reply to an image with this command to get its imgbb link",
+    guide: "{pn}imgbb (reply to an image)"
   },
 
   onStart: async function ({ api, event }) {
-    const imgbbApiKey = "1b4d99fa0c3195efe42ceb62670f2a25";
-    const attachments = event.messageReply?.attachments?.filter(att =>
-      ["photo", "sticker", "animated_image"].includes(att.type)
-    );
-
-    if (!attachments || attachments.length === 0) {
-      return api.sendMessage("Please reply to one or more image attachments.", event.threadID, event.messageID);
-    }
-
     try {
-      const uploadedLinks = await Promise.all(
-        attachments.map(async (attachment, index) => {
-          const response = await axios.get(attachment.url, { responseType: "arraybuffer" });
-          const formData = new FormData();
-          formData.append("image", Buffer.from(response.data, "binary"), { filename: `image${index}.jpg` });
+      if (!event.messageReply || !event.messageReply.attachments || event.messageReply.attachments.length === 0) {
+        return api.sendMessage("❌ Please reply to an image.", event.threadID, event.messageID);
+      }
 
-          const res = await axios.post("https://api.imgbb.com/1/upload", formData, {
-            headers: formData.getHeaders(),
-            params: {
-              key: imgbbApiKey
-            }
-          });
+      const imageUrl = event.messageReply.attachments[0].url;
+      const apiUrl = `https://kaiz-apis.gleeze.com/api/imgbb?url=${encodeURIComponent(imageUrl)}&apikey=${apikey}`;
 
-          return res.data.data.url;
-        })
-      );
+      const response = await axios.get(apiUrl);
+      const data = response.data;
 
-      return api.sendMessage(uploadedLinks.join("\n"), event.threadID, event.messageID);
-
-    } catch (err) {
-      console.error("Upload error:", err);
-      return api.sendMessage("Failed to upload one or more images to imgbb.", event.threadID, event.messageID);
+      if (data.success && data.link) {
+        return api.sendMessage(`✅ Uploaded successfully!\n\nLink:\n${data.link}`, event.threadID, event.messageID);
+      } else {
+        return api.sendMessage("❌ Upload failed.", event.threadID, event.messageID);
+      }
+    } catch (error) {
+      console.error("imgbb command error:", error);
+      return api.sendMessage("❌ Something went wrong.", event.threadID, event.messageID);
     }
   }
 };

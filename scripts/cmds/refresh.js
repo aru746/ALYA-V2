@@ -1,78 +1,96 @@
 module.exports = {
 	config: {
 		name: "refresh",
-		version: "1.2",
-		author: "NTKhang",
-		countDown: 60,
+		version: "2.0",
+		author: "Arju",
+		countDown: 10,
 		role: 0,
 		description: {
-			vi: "làm mới thông tin nhóm chat hoặc người dùng",
-			en: "refresh information of group chat or user"
+			en: "Refresh information of group chat or user and update database"
 		},
-		category: "box chat",
-		guide: {
-			vi: "   {pn} [thread | group]: làm mới thông tin nhóm chat của bạn"
-				+ "\n   {pn} group <threadID>: làm mới thông tin nhóm chat theo ID"
-				+ "\n\n   {pn} user: làm mới thông tin người dùng của bạn"
-				+ "\n   {pn} user [<userID> | @tag]: làm mới thông tin người dùng theo ID",
-			en: "   {pn} [thread | group]: refresh information of your group chat"
-				+ "\n   {pn} group <threadID>: refresh information of group chat by ID"
-				+ "\n\n   {pn} user: refresh information of your user"
-				+ "\n   {pn} user [<userID> | @tag]: refresh information of user by ID"
-		}
+		category: "group"
 	},
 
 	langs: {
-		vi: {
-			refreshMyThreadSuccess: "✓ | Đã làm mới thông tin nhóm chat của bạn thành công!",
-			refreshThreadTargetSuccess: "✓ | Đã làm mới thông tin nhóm chat %1 thành công!",
-			errorRefreshMyThread: "✗ | Đã xảy ra lỗi không thể làm mới thông tin nhóm chat của bạn",
-			errorRefreshThreadTarget: "✗ | Đã xảy ra lỗi không thể làm mới thông tin nhóm chat %1",
-			refreshMyUserSuccess: "✓ | Đã làm mới thông tin người dùng của bạn thành công!",
-			refreshUserTargetSuccess: "✓ | Đã làm mới thông tin người dùng %1 thành công!",
-			errorRefreshMyUser: "✗ | Đã xảy ra lỗi không thể làm mới thông tin người dùng của bạn",
-			errorRefreshUserTarget: "✗ | Đã xảy ra lỗi không thể làm mới thông tin người dùng %1"
-		},
 		en: {
-			refreshMyThreadSuccess: "✓ | Refresh information of your group chat successfully!",
-			refreshThreadTargetSuccess: "✓ | Refresh information of group chat %1 successfully!",
-			errorRefreshMyThread: "✗ | Error when refresh information of your group chat",
-			errorRefreshThreadTarget: "✗ | Error when refresh information of group chat %1",
-			refreshMyUserSuccess: "✓ | Refresh information of your user successfully!",
-			refreshUserTargetSuccess: "✓ | Refresh information of user %1 successfully!",
-			errorRefreshMyUser: "✗ | Error when refresh information of your user",
-			errorRefreshUserTarget: "✗ | Error when refresh information of user %1"
+			refreshThreadSuccess: "✅ | Group data & database refreshed successfully!",
+			refreshUserSuccess: "✅ | User data & database refreshed successfully!",
+			error: "❌ | Failed to refresh data."
 		}
 	},
 
-	onStart: async function ({ args, threadsData, message, event, usersData, getLang }) {
-		if (args[0] == "group" || args[0] == "thread") {
-			const targetID = args[1] || event.threadID;
-			try {
-				await threadsData.refreshInfo(targetID);
-				return message.reply(targetID == event.threadID ? getLang("refreshMyThreadSuccess") : getLang("refreshThreadTargetSuccess", targetID));
+	onStart: async function ({ args, threadsData, usersData, message, event, api, getLang }) {
+
+		try {
+
+			// =========================
+			// 🔹 REFRESH GROUP + DATABASE
+			// =========================
+			if (args[0] === "group" || args[0] === "thread") {
+
+				const threadID = args[1] || event.threadID;
+
+				// 🔹 Get latest thread info from Facebook
+				const threadInfo = await api.getThreadInfo(threadID);
+
+				// 🔹 Force update database
+				await threadsData.set(threadID, {
+					threadName: threadInfo.threadName,
+					adminIDs: threadInfo.adminIDs,
+					participantIDs: threadInfo.participantIDs,
+					isGroup: threadInfo.isGroup,
+					imageSrc: threadInfo.imageSrc,
+					updateTime: Date.now()
+				});
+
+				return message.reply(getLang("refreshThreadSuccess"));
 			}
-			catch (error) {
-				return message.reply(targetID == event.threadID ? getLang("errorRefreshMyThread") : getLang("errorRefreshThreadTarget", targetID));
+
+			// =========================
+			// 🔹 REFRESH USER + DATABASE
+			// =========================
+			else if (args[0] === "user") {
+
+				let userID = event.senderID;
+
+				if (args[1]) {
+					if (event.mentions && Object.keys(event.mentions).length > 0)
+						userID = Object.keys(event.mentions)[0];
+					else
+						userID = args[1];
+				}
+
+				// 🔹 Get latest user info from Facebook
+				const userInfo = await api.getUserInfo(userID);
+				const data = userInfo[userID];
+
+				// 🔹 Force update database
+				await usersData.set(userID, {
+					name: data.name,
+					firstName: data.firstName,
+					isFriend: data.isFriend,
+					gender: data.gender,
+					vanity: data.vanity,
+					profileUrl: data.profileUrl,
+					updateTime: Date.now()
+				});
+
+				return message.reply(getLang("refreshUserSuccess"));
 			}
+
+			else {
+				return message.reply(
+					"⚠️ Usage:\n" +
+					"• refresh group\n" +
+					"• refresh group <threadID>\n" +
+					"• refresh user\n" +
+					"• refresh user <userID | @tag>"
+				);
+			}
+
+		} catch (err) {
+			console.error(err);
+			return message.reply(getLang("error"));
 		}
-		else if (args[0] == "user") {
-			let targetID = event.senderID;
-			if (args[1]) {
-				if (Object.keys(event.mentions).length)
-					targetID = Object.keys(event.mentions)[0];
-				else
-					targetID = args[1];
-			}
-			try {
-				await usersData.refreshInfo(targetID);
-				return message.reply(targetID == event.senderID ? getLang("refreshMyUserSuccess") : getLang("refreshUserTargetSuccess", targetID));
-			}
-			catch (error) {
-				return message.reply(targetID == event.senderID ? getLang("errorRefreshMyUser") : getLang("errorRefreshUserTarget", targetID));
-			}
-		}
-		else
-			message.SyntaxError();
 	}
 };

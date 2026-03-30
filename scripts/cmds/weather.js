@@ -22,15 +22,19 @@ function formatHours(hours) {
 module.exports = {
 	config: {
 		name: "weather",
-		version: "1.2",
+		version: "1.1",
 		author: "NTKhang",
 		countDown: 5,
 		role: 0,
-		description: {
+		shortDescription: {
+			vi: "dự báo thời tiết",
+			en: "weather forecast"
+		},
+		longDescription: {
 			vi: "xem dự báo thời tiết hiện tại và 5 ngày sau",
 			en: "view the current and next 5 days weather forecast"
 		},
-		category: "other",
+		category: "group",
 		guide: {
 			vi: "{pn} <địa điểm>",
 			en: "{pn} <location>"
@@ -79,7 +83,7 @@ module.exports = {
 			dataWeather = (await axios.get(`http://api.accuweather.com/forecasts/v1/daily/10day/${areaKey}?apikey=${apikey}&details=true&language=vi`)).data;
 		}
 		catch (err) {
-			return message.reply(`✗ Đã xảy ra lỗi: ${err.response.data.Message}`);
+			return message.reply(`❌ Đã xảy ra lỗi: ${err.response.data.Message}`);
 		}
 
 		const dataWeatherDaily = dataWeather.DailyForecasts;
