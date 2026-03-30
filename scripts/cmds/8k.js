@@ -22,8 +22,8 @@ function extractImageUrl(args, event) {
 
 module.exports = {
   config: {
-    name: "4k",
-    aliases: ["upscale", "hd", "enhance"],
+    name: "8k",
+    aliases: ["8k"],
     version: "1.0",
     author: "NeoKEX",
     countDown: 15,
