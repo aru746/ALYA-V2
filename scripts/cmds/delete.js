@@ -1,59 +1,32 @@
-const fs = require("fs-extra");
-const path = require("path");
-
 module.exports = {
-	config: {
-		name: "delete",
-		version: "1.0",
-		author: "NeoKEX",
-		countDown: 5,
-		role: 2,
-		description: {
-			vi: "Xóa một lệnh",
-			en: "Delete a command"
-		},
-		category: "admin",
-		guide: {
-			vi: "   {pn} <tên lệnh>: xóa lệnh",
-			en: "   {pn} <command name>: delete command"
-		}
-	},
+  config: {
+    name: "delete",
+    aliases: ["del"],
+    author: "S",
+role: 2,
+    category: "admin"
+  },
 
-	langs: {
-		vi: {
-			noArgs: "⭕ Vui lòng cung cấp tên lệnh cần xóa",
-			notFound: "⭕ Không tìm thấy lệnh: %1",
-			deleted: "✅ Đã xóa lệnh: %1",
-			error: "✗ Đã xảy ra lỗi: %1"
-		},
-		en: {
-			noArgs: "⭕ Please provide command name to delete",
-			notFound: "⭕ Command not found: %1",
-			deleted: "✅ Deleted command: %1",
-			error: "✗ An error occurred: %1"
-		}
-	},
+  onStart: async function ({ api, event, args }) {
+    const fs = require('fs');
+    const path = require('path');
 
-	onStart: async function ({ args, message, getLang }) {
-		if (!args.length) {
-			return message.reply(getLang("noArgs"));
-		}
+    const fileName = args[0];
 
-		const commandName = args[0].toLowerCase();
-		const commandPath = path.join(__dirname, `${commandName}.js`);
+    if (!fileName) {
+      api.sendMessage("Please provide a file name to delete.", event.threadID);
+      return;
+    }
 
-		try {
-			// Check if file exists
-			if (!fs.existsSync(commandPath)) {
-				return message.reply(getLang("notFound", commandName));
-			}
+    const filePath = path.join(__dirname, fileName);
 
-			// Delete the file
-			fs.unlinkSync(commandPath);
-			
-			return message.reply(getLang("deleted", commandName));
-		} catch (err) {
-			return message.reply(getLang("error", err.message));
-		}
-	}
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error(err);
+        api.sendMessage(`❎ | Failed to delete ${fileName}.`, event.threadID);
+        return;
+      }
+      api.sendMessage(`✅ ( ${fileName} ) Deleted successfully!`, event.threadID);
+    });
+  }
 };

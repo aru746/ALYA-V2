@@ -1,165 +1,94 @@
+// Unicode bold converter
+function toBoldUnicode(text) {
+	const map = {
+		"a":"𝐚","b":"𝐛","c":"𝐜","d":"𝐝","e":"𝐞","f":"𝐟","g":"𝐠","h":"𝐡","i":"𝐢","j":"𝐣",
+		"k":"𝐤","l":"𝐥","m":"𝐦","n":"𝐧","o":"𝐨","p":"𝐩","q":"𝐪","r":"𝐫","s":"𝐬","t":"𝐭",
+		"u":"𝐮","v":"𝐯","w":"𝐰","x":"𝐱","y":"𝐲","z":"𝐳",
+		"A":"𝐀","B":"𝐁","C":"𝐂","D":"𝐃","E":"𝐄","F":"𝐅","G":"𝐆","H":"𝐇","I":"𝐈","J":"𝐉",
+		"K":"𝐊","L":"𝐋","M":"𝐌","N":"𝐍","O":"𝐎","P":"𝐏","Q":"𝐐","R":"𝐑","S":"𝐒","T":"𝐓",
+		"U":"𝐔","V":"𝐕","W":"𝐖","X":"𝐗","Y":"𝐘","Z":"𝐙",
+		"0":"𝟎","1":"𝟏","2":"𝟐","3":"𝟑","4":"𝟒","5":"𝟓","6":"𝟔","7":"𝟕","8":"𝟖","9":"𝟗",
+		" ":" "
+	};
+	return text.split("").map(c => map[c] || c).join("");
+}
+
 module.exports = {
 	config: {
 		name: "count",
-		version: "1.3",
-		author: "NTKhang",
+		aliases: ["c"],
+		version: "1.4",
+		author: "Arijit",
 		countDown: 5,
 		role: 0,
-		description: {
-			vi: "Xem số lượng tin nhắn của tất cả thành viên hoặc bản thân (tính từ lúc bot vào nhóm)",
-			en: "View the number of messages of all members or yourself (since the bot joined the group)"
-		},
-		category: "box chat",
-		guide: {
-			vi: "   {pn}: dùng để xem số lượng tin nhắn của bạn"
-				+ "\n   {pn} @tag: dùng để xem số lượng tin nhắn của những người được tag"
-				+ "\n   {pn} all: dùng để xem số lượng tin nhắn của tất cả thành viên",
-			en: "   {pn}: used to view the number of messages of you"
-				+ "\n   {pn} @tag: used to view the number of messages of those tagged"
-				+ "\n   {pn} all: used to view the number of messages of all members"
-		}
+		category: "box chat"
 	},
 
-	langs: {
-		vi: {
-			count: "Số tin nhắn của các thành viên:",
-			endMessage: "Những người không có tên trong danh sách là chưa gửi tin nhắn nào.",
-			page: "Trang [%1/%2]",
-			reply: "Phản hồi tin nhắn này kèm số trang để xem tiếp",
-			result: "%1 hạng %2 với %3 tin nhắn",
-			yourResult: "Bạn đứng hạng %1 và đã gửi %2 tin nhắn trong nhóm này",
-			invalidPage: "Số trang không hợp lệ"
-		},
-		en: {
-			count: "Number of messages of members:",
-			endMessage: "Those who do not have a name in the list have not sent any messages.",
-			page: "Page [%1/%2]",
-			reply: "Reply to this message with the page number to view more",
-			result: "%1 rank %2 with %3 messages",
-			yourResult: "You are ranked %1 and have sent %2 messages in this group",
-			invalidPage: "Invalid page number"
-		}
-	},
-
-	onStart: async function ({ args, threadsData, message, event, api, commandName, getLang }) {
+	onStart: async function ({ args, threadsData, message, event, api }) {
 		const { threadID, senderID } = event;
-		const threadData = await threadsData.get(threadID);
-		const { members } = threadData;
+		const members = await threadsData.get(threadID, "members");
 		const usersInGroup = (await api.getThreadInfo(threadID)).participantIDs;
-		let arraySort = [];
-		for (const user of members) {
-			if (!usersInGroup.includes(user.userID))
-				continue;
-			const charac = "️️️️️️️️️️️️️️️️️"; // This character is banned from facebook chat (it is not an empty string)
-			arraySort.push({
-				name: user.name.includes(charac) ? `Uid: ${user.userID}` : user.name,
-				count: user.count,
-				uid: user.userID
+
+		let list = [];
+
+		for (const u of members) {
+			if (!usersInGroup.includes(u.userID)) continue;
+			list.push({
+				uid: u.userID,
+				name: toBoldUnicode(u.name),
+				count: u.count
 			});
 		}
-		let stt = 1;
-		arraySort.sort((a, b) => b.count - a.count);
-		arraySort.map(item => item.stt = stt++);
 
-		if (args[0]) {
-			if (args[0].toLowerCase() == "all") {
-				let msg = getLang("count");
-				const endMessage = getLang("endMessage");
-				for (const item of arraySort) {
-					if (item.count > 0)
-						msg += `\n${item.stt}/ ${item.name}: ${item.count}`;
-				}
+		list.sort((a, b) => b.count - a.count);
 
-				if ((msg + endMessage).length > 19999) {
-					msg = "";
-					let page = parseInt(args[1]);
-					if (isNaN(page))
-						page = 1;
-					const splitPage = global.utils.splitPage(arraySort, 50);
-					arraySort = splitPage.allPage[page - 1];
-					for (const item of arraySort) {
-						if (item.count > 0)
-							msg += `\n${item.stt}/ ${item.name}: ${item.count}`;
-					}
-					msg += getLang("page", page, splitPage.totalPage)
-						+ `\n${getLang("reply")}`
-						+ `\n\n${endMessage}`;
+		/* ===== count all ===== */
+		if (args[0] && args[0].toLowerCase() === "all") {
+			list = list.slice(0, 50);
+			let msg = "Number of messages of members:\n";
 
-					return message.reply(msg, (err, info) => {
-						if (err)
-							return message.err(err);
-						global.GoatBot.onReply.set(info.messageID, {
-							commandName,
-							messageID: info.messageID,
-							splitPage,
-							author: senderID
-						});
-					});
-				}
-				message.reply(msg);
-			}
-			else if (event.mentions) {
-				let msg = "";
-				for (const id in event.mentions) {
-					const findUser = arraySort.find(item => item.uid == id);
-					msg += `\n${getLang("result", findUser.name, findUser.stt, findUser.count)}`;
-				}
-				message.reply(msg);
-			}
-		}
-		else {
-			const findUser = arraySort.find(item => item.uid == senderID);
-			return message.reply(getLang("yourResult", findUser.stt, findUser.count));
-		}
-	},
-
-	onReply: ({ message, event, Reply, commandName, getLang }) => {
-		const { senderID, body } = event;
-		const { author, splitPage } = Reply;
-		if (author != senderID)
-			return;
-		const page = parseInt(body);
-		if (isNaN(page) || page < 1 || page > splitPage.totalPage)
-			return message.reply(getLang("invalidPage"));
-		let msg = getLang("count");
-		const endMessage = getLang("endMessage");
-		const arraySort = splitPage.allPage[page - 1];
-		for (const item of arraySort) {
-			if (item.count > 0)
-				msg += `\n${item.stt}/ ${item.name}: ${item.count}`;
-		}
-		msg += getLang("page", page, splitPage.totalPage)
-			+ "\n" + getLang("reply")
-			+ "\n\n" + endMessage;
-		message.reply(msg, (err, info) => {
-			if (err)
-				return message.err(err);
-			message.unsend(Reply.messageID);
-			global.GoatBot.onReply.set(info.messageID, {
-				commandName,
-				messageID: info.messageID,
-				splitPage,
-				author: senderID
+			list.forEach((u, i) => {
+				if (i === 0) msg += `🥇 ${u.name}: ${toBoldUnicode(String(u.count))}\n`;
+				else if (i === 1) msg += `🥈 ${u.name}: ${toBoldUnicode(String(u.count))}\n`;
+				else if (i === 2) msg += `🥉 ${u.name}: ${toBoldUnicode(String(u.count))}\n`;
+				else msg += `${i + 1}. ${u.name}: ${toBoldUnicode(String(u.count))}\n`;
 			});
+
+			return message.reply(msg.trim(), (err, info) => {
+				if (err) return;
+				setTimeout(() => api.unsendMessage(info.messageID), 15000);
+			});
+		}
+
+		/* ===== count (self) ===== */
+		const rank = list.findIndex(u => u.uid === senderID) + 1;
+		const me = list.find(u => u.uid === senderID);
+		if (!me) return;
+
+		const selfMsg = toBoldUnicode(
+			`You are ranked ${rank} and have sent ${me.count} messages in this group`
+		);
+
+		return message.reply(selfMsg, (err, info) => {
+			if (err) return;
+			setTimeout(() => api.unsendMessage(info.messageID), 15000);
 		});
 	},
 
 	onChat: async ({ usersData, threadsData, event }) => {
 		const { senderID, threadID } = event;
 		const members = await threadsData.get(threadID, "members");
-		const findMember = members.find(user => user.userID == senderID);
-		if (!findMember) {
+		const user = members.find(u => u.userID === senderID);
+
+		if (!user) {
 			members.push({
 				userID: senderID,
 				name: await usersData.getName(senderID),
-				nickname: null,
 				inGroup: true,
 				count: 1
 			});
-		}
-		else
-			findMember.count += 1;
+		} else user.count++;
+
 		await threadsData.set(threadID, members, "members");
 	}
-
 };

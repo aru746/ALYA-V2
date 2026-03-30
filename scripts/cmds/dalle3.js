@@ -13,7 +13,7 @@ module.exports = {
     countDown: 15,
     role: 0,
     longDescription: "Generate an image using the DALL-E 3 model.",
-    category: "ai-image",
+    category: "imagine",
     guide: {
       en: "{pn} <prompt>"
     }

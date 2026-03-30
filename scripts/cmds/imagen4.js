@@ -13,7 +13,7 @@ module.exports = {
     countDown: 15,
     role: 0,
     longDescription: "Generate a high-quality image using the Imagen 4 model.",
-    category: "ai-image",
+    category: "imagine",
     guide: {
       en: "{pn} <prompt>"
     }

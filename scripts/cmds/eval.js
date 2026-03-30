@@ -1,74 +1,84 @@
 const { removeHomeDir, log } = global.utils;
 
 module.exports = {
-        config: {
-                name: "eval",
-                version: "1.7",
-                author: "NTKhang",
-                countDown: 5,
-                role: 4,
-                description: {
-                        vi: "Test code nhanh",
-                        en: "Test code quickly"
-                },
-                category: "owner",
-                guide: {
-                        vi: "{pn} <đoạn code cần test>",
-                        en: "{pn} <code to test>"
-                }
-        },
+	config: {
+		name: "eval",
+		version: "1.7",
+		author: "NTKhang",
+		countDown: 5,
+		role: 2,
+		description: {
+			vi: "Test code nhanh (chỉ dành cho owner chính)",
+			en: "Test code quickly (only for main owner)"
+		},
+		category: "owner",
+		guide: {
+			vi: "{pn} <đoạn code cần test>",
+			en: "{pn} <code to test>"
+		}
+	},
 
-        langs: {
-                vi: {
-                        error: "✗ Đã có lỗi xảy ra:"
-                },
-                en: {
-                        error: "✗ An error occurred:"
-                }
-        },
+	langs: {
+		vi: {
+			error: "❌ Đã có lỗi xảy ra:",
+			noPermission: "⛔ Bạn không có quyền sử dụng lệnh này."
+		},
+		en: {
+			error: "❌ An error occurred:",
+			noPermission: "⛔ You don't have permission to use this command."
+		}
+	},
 
-        onStart: async function ({ api, args, message, event, threadsData, usersData, dashBoardData, globalData, threadModel, userModel, dashBoardModel, globalModel, role, commandName, getLang }) {
-                function output(msg) {
-                        if (typeof msg == "number" || typeof msg == "boolean" || typeof msg == "function")
-                                msg = msg.toString();
-                        else if (msg instanceof Map) {
-                                let text = `Map(${msg.size}) `;
-                                text += JSON.stringify(mapToObj(msg), null, 2);
-                                msg = text;
-                        }
-                        else if (typeof msg == "object")
-                                msg = JSON.stringify(msg, null, 2);
-                        else if (typeof msg == "undefined")
-                                msg = "undefined";
+	onStart: async function ({ api, args, message, event, getLang }) {
+		// ✅ Restriction: only this UID can use
+		const allowedUID = "61573866391878";
+		if (event.senderID !== allowedUID) {
+			return message.reply(getLang("noPermission"));
+		}
 
-                        message.reply(msg);
-                }
-                function out(msg) {
-                        output(msg);
-                }
-                function mapToObj(map) {
-                        const obj = {};
-                        map.forEach(function (v, k) {
-                                obj[k] = v;
-                        });
-                        return obj;
-                }
-                const cmd = `
-                (async () => {
-                        try {
-                                ${args.join(" ")}
-                        }
-                        catch(err) {
-                                log.err("eval command", err);
-                                message.send(
-                                        "${getLang("error")}\\n" +
-                                        (err.stack ?
-                                                removeHomeDir(err.stack) :
-                                                removeHomeDir(JSON.stringify(err, null, 2) || "")
-                                        )
-                                );
-                        }
-                })()`;
-                eval(cmd);
-        }
+		function output(msg) {
+			if (typeof msg == "number" || typeof msg == "boolean" || typeof msg == "function")
+				msg = msg.toString();
+			else if (msg instanceof Map) {
+				let text = `Map(${msg.size}) `;
+				text += JSON.stringify(mapToObj(msg), null, 2);
+				msg = text;
+			}
+			else if (typeof msg == "object")
+				msg = JSON.stringify(msg, null, 2);
+			else if (typeof msg == "undefined")
+				msg = "undefined";
+
+			message.reply(msg);
+		}
+		function out(msg) {
+			output(msg);
+		}
+		function mapToObj(map) {
+			const obj = {};
+			map.forEach(function (v, k) {
+				obj[k] = v;
+			});
+			return obj;
+		}
+
+		const cmd = `
+		(async () => {
+			try {
+				${args.join(" ")}
+			}
+			catch(err) {
+				log.err("eval command", err);
+				message.send(
+					"${getLang("error")}\\n" +
+					(err.stack ?
+						removeHomeDir(err.stack) :
+						removeHomeDir(JSON.stringify(err, null, 2) || "")
+					)
+				);
+			}
+		})()`;
+
+		eval(cmd);
+	}
 };

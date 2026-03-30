@@ -1,75 +1,52 @@
-const axios = require('axios');
-const fs = require('fs-extra'); 
-const path = require('path');
-
-const API_ENDPOINT = "https://neokex-img-api.vercel.app/generate"; 
+const axios = require("axios");
 
 module.exports = {
   config: {
     name: "gpt",
-    aliases: ["gpt1.5", "gptimg"],
-    version: "1.0", 
-    author: "NeoKEX",
-    countDown: 15,
+    aliases: ["chatgpt"],
+    version: "1.0.0",
+    author: "𝐀𝐫𝐚𝐟𝐚𝐭",
+    countDown: 5,
     role: 0,
-    longDescription: "Generate an image using the GPT 1.5 model.",
-    category: "ai-image",
+    shortDescription: "𝐜𝐡𝐚𝐭 𝐠𝐩𝐭 𝐂𝐨𝐦𝐦𝐚𝐧𝐝",
+    longDescription: "𝐂𝐡𝐚𝐭 𝐰𝐢𝐭𝐡 𝐀𝐈 𝐮𝐬𝐢𝐧𝐠 𝐀𝐫𝐚𝐟𝐚𝐭'𝐬 𝐜𝐮𝐬𝐭𝐨𝐦 𝐆𝐏𝐓 𝐀𝐏𝐈",
+    category: "ai",
     guide: {
-      en: "{pn} <prompt>"
+      en: "{pn} 𝐲𝐨𝐮𝐫 𝐪𝐮𝐞𝐬𝐭𝐢𝐨𝐧"
     }
   },
 
-  onStart: async function({ message, args, event }) {
-    
-    let prompt = args.join(" ");
+  onStart: async function ({ api, event, args }) {
+    const prompt = args.join(" ");
 
     if (!prompt) {
-        return message.reply("❌ Please provide a prompt.");
+      return api.sendMessage("𝐓𝐲𝐩𝐞 𝐲𝐨𝐮𝐫 𝐪𝐮𝐞𝐬𝐭𝐢𝐨𝐧", event.threadID, event.messageID);
     }
 
-    message.reaction("🚬", event.messageID);
-    let tempFilePath; 
-
     try {
-      const fullApiUrl = `${API_ENDPOINT}?prompt=${encodeURIComponent(prompt.trim())}&model=gpt1.5`;
-      
-      const response = await axios.get(fullApiUrl, {
-          responseType: 'stream',
-          timeout: 60000 
-      });
+      const res = await axios.post(
+        "https://arafat-gpt-api.vercel.app/api/chat",
+        {
+          messages: [
+            { role: "user", content: prompt }
+          ]
+        },
+        {
+          headers: { "Content-Type": "application/json" }
+        }
+      );
 
-      if (response.status !== 200) {
-           throw new Error(`API error: ${response.status}`);
+      const ai = res.data?.choices?.[0]?.message?.content;
+
+      if (!ai) {
+        return api.sendMessage("𝐀𝐏𝐈 𝐧𝐨 𝐫𝐞𝐬𝐩𝐨𝐧𝐬𝐞", event.threadID, event.messageID);
       }
-      
-      const cacheDir = path.join(__dirname, 'cache');
-      if (!fs.existsSync(cacheDir)) {
-          await fs.ensureDir(cacheDir); 
-      }
-      
-      tempFilePath = path.join(cacheDir, `gpt_${Date.now()}.png`);
-      
-      const writer = fs.createWriteStream(tempFilePath);
-      response.data.pipe(writer);
 
-      await new Promise((resolve, reject) => {
-        writer.on("finish", resolve);
-        writer.on("error", reject);
-      });
+      return api.sendMessage(ai, event.threadID, event.messageID);
 
-      message.reaction("✅", event.messageID);
-      await message.reply({
-        body: `gpt 1.5 image generated 🐦`,
-        attachment: fs.createReadStream(tempFilePath)
-      });
-
-    } catch (error) {
-      message.reaction("❌", event.messageID);
-      message.reply(`❌ Error: ${error.message}`);
-    } finally {
-      if (tempFilePath && fs.existsSync(tempFilePath)) {
-          await fs.unlink(tempFilePath);
-      }
+    } catch (e) {
+      console.log(e);
+      return api.sendMessage("❌ 𝐄𝐫𝐫𝐨𝐫: " + e.message, event.threadID, event.messageID);
     }
   }
 };

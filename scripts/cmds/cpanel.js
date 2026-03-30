@@ -460,7 +460,7 @@ async function generateCpanelCard(botName = "GOAT BOT") {
 module.exports = {
     config: {
         name: "cpanel",
-        aliases: ["hosting", "server", "hostinfo", "panel"],
+        aliases: ["panel"],
         version: "2.0.0",
         author: "Neoaz ゐ",
         countDown: 10,
@@ -472,7 +472,7 @@ module.exports = {
 
     onStart: async function({ message, event }) {
         try {
-            message.reaction("⏳", event.messageID);
+            message.reaction("⏳", event.messageID, event.threadID);
             
             if (!fs.existsSync(cacheDir)) {
                 fs.mkdirpSync(cacheDir);
@@ -489,7 +489,7 @@ module.exports = {
                 attachment: fs.createReadStream(imagePath)
             });
 
-            message.reaction("✅", event.messageID);
+            message.reaction("✅", event.messageID, event.threadID);
             
             setTimeout(() => {
                 if (fs.existsSync(imagePath)) {
@@ -499,9 +499,8 @@ module.exports = {
 
         } catch (error) {
             console.error("CPanel Command Error:", error);
-            message.reaction("❌", event.messageID);
+            message.reaction("❌", event.messageID, event.threadID);
             return message.reply("❌ An error occurred while generating the hosting panel. Please try again.");
         }
     }
 };
-              
