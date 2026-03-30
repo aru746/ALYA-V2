@@ -23,8 +23,8 @@ async function downloadFile(url, tempDir, filename) {
 
 module.exports = {
     config: {
-        name: "animate",
-        aliases: ["anim", "vido", "mvid"],
+        name: "animate3",
+        aliases: ["i2v2"],
         version: "2.0",
         author: "Neoaz ゐ",
         countDown: 30,
