@@ -6,14 +6,14 @@ const API_ENDPOINT = "https://dev.oculux.xyz/api/artv1";
 
 module.exports = {
   config: {
-    name: "art",
+    name: "art4",
     aliases: ["artv1", "draw"],
     version: "1.0", 
     author: "NeoKEX",
     countDown: 15,
     role: 0,
     longDescription: "Generate an image using the ArtV1 model.",
-    category: "ai-image",
+    category: "imagine",
     guide: {
       en: "{pn} <prompt>"
     }
