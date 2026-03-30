@@ -13,7 +13,7 @@ module.exports = {
     countDown: 15,
     role: 0,
     longDescription: "Generate an image using the SupAnime model.",
-    category: "ai-image",
+    category: "anime",
     guide: {
       en: "{pn} <prompt>"
     }
