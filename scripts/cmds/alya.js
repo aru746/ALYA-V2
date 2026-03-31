@@ -4,20 +4,22 @@ module.exports = {
   config: {
     name: "alya",
     aliases: ["alyachan", "alisa"],
-    version: "1.0",
+    version: "1.2",
     author: "Arijit",
     countDown: 10,
     role: 0,
     shortDescription: "Send a random Alya Kujou video",
     longDescription: "Sends one random Alya Kujou video with a cute caption",
-    category: "auto",
+    category: "anime",
     guide: "{pn}"
   },
 
   onStart: async function ({ message, event, api }) {
+    const { messageID, threadID } = event;
+
     try {
-      // React with ⏳ when command starts
-      api.setMessageReaction("⏳", event.messageID, () => {}, true);
+      // Step 1: Loading reaction
+      api.setMessageReaction("⏳", messageID, () => {}, true);
 
       const videos = [
         "https://files.catbox.moe/oa761p.mp4",
@@ -36,19 +38,27 @@ module.exports = {
         "https://files.catbox.moe/sh7mhs.mp4"
       ];
 
+      // Randomly link select kora
       const link = videos[Math.floor(Math.random() * videos.length)];
 
+      // Step 2: Stream fetch kora (Direct Axios use kore jate failure rate 0 hoy)
+      const response = await axios.get(link, { responseType: 'stream' });
+
+      // Step 3: Message send
       await message.reply({
-        body: ">🎀\n𝐇𝐞𝐫𝐞'𝐬 𝐲𝐨𝐮𝐫 𝐫𝐚𝐧𝐝𝐨𝐦 𝐀𝐥𝐢𝐬𝐚 𝐦𝐢𝐤𝐡𝐚𝐢𝐥𝐨𝐯𝐧𝐚 𝐯𝐢𝐝𝐞𝐨",
-        attachment: await global.utils.getStreamFromURL(link)
+        body: "🎀 𝐇𝐞𝐫𝐞'𝐬 𝐲𝐨𝐮𝐫 𝐫𝐚𝐧𝐝𝐨𝐦 𝐀𝐥𝐢𝐬𝐚 𝐌𝐢𝐤𝐡𝐚𝐢𝐥𝐨𝐯𝐧𝐚 𝐯𝐢𝐝𝐞𝐨!",
+        attachment: response.data
       });
 
-      // Change reaction to ✅ after sending video
-      api.setMessageReaction("✅", event.messageID, () => {}, true);
+      // Step 4: Success reaction
+      api.setMessageReaction("✅", messageID, () => {}, true);
 
     } catch (err) {
-      message.reply("❌ | Failed to send video. Please try again.");
-      console.error(err);
+      console.error("ALYA CMD ERROR:", err);
+      
+      // Error message
+      message.reply("❌ | Video send korte somossya hocche. Hoyto link block ba server down.");
+      api.setMessageReaction("❌", messageID, () => {}, true);
     }
   }
 };
