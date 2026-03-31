@@ -16,7 +16,7 @@ module.exports = {
 		longDescription: {
 			en: "View detailed performance metrics including memory usage, command stats, spam tracking, and FCA optimizer health"
 		},
-		category: "system",
+		category: "group",
 		guide: {
 			en: "{pn} - View performance stats\n{pn} clear - Clear performance caches"
 		}
