@@ -3,8 +3,8 @@ const fs = require("fs-extra");
 module.exports = {
   config: {
     name: "sendmoney",
-    aliases: ["send","s-m","send-m","money"],
-    version: "2.8.0",
+    aliases: ["send","s-m","s","money"],
+    version: "2.8.1",
     author: "Arijit",
     countDown: 5,
     role: 0,
@@ -19,7 +19,6 @@ module.exports = {
     let amount = null;
     let recipientID = null;
 
-    // Convert shorthand money (K, M, B, T, Q) to full number
     function parseShorthand(value) {
       if (!value) return NaN;
       value = value.toUpperCase();
@@ -32,34 +31,27 @@ module.exports = {
       return parseFloat(value) * multiplier;
     }
 
-    // Remove command from args if included
     if (args[0] && args[0].toLowerCase().startsWith("send")) args.shift();
 
-    // Case 1: Reply + amount
     if (event.messageReply) {
-      if (args.length === 1) {
-        amount = parseShorthand(args[0]);
-        recipientID = event.messageReply.senderID;
-      }
+      amount = parseShorthand(args[0]);
+      recipientID = event.messageReply.senderID;
     }
-    // Case 2: Mention + amount
-    else if (Object.keys(event.mentions).length > 0 && args.length >= 2) {
+    else if (Object.keys(event.mentions).length > 0) {
       recipientID = Object.keys(event.mentions)[0];
       amount = parseShorthand(args[args.length - 1]);
     }
-    // Case 3: UID + amount
     else if (args.length >= 2 && /^\d{5,}$/.test(args[0])) {
       recipientID = args[0];
       amount = parseShorthand(args[1]);
     }
 
-    // Invalid usage
     if (!recipientID || isNaN(amount)) {
       return message.reply(
         "⚠ Usage:\n" +
-        `- ${prefix}s-m @user <amount>\n` +
-        `- ${prefix}s-m <UID> <amount>\n` +
-        `- ${prefix}s-m <amount> (as a reply)\n\n` +
+        `- ${prefix}s @user <amount>\n` +
+        `- ${prefix}s <UID> <amount>\n` +
+        `- ${prefix}s <amount> (as a reply)\n\n` +
         `💡 Supports K, M, B, T, Q (e.g. 10K, 5M, 2.5B)`
       );
     }
@@ -75,13 +67,11 @@ module.exports = {
       return message.reply(`❌ You don’t have enough balance. Your balance: $${senderBalance}`);
     }
 
-    // Transfer money
     await usersData.set(senderID, { money: senderBalance - amount });
     await usersData.set(recipientID, { money: (recipientData.money || 0) + amount });
 
     const recipientName = recipientData.name || "User";
 
-    // Bold converter
     function toBoldUnicode(text) {
       const boldAlphabet = {
         "a":"𝐚","b":"𝐛","c":"𝐜","d":"𝐝","e":"𝐞","f":"𝐟","g":"𝐠","h":"𝐡","i":"𝐢","j":"𝐣",
@@ -90,13 +80,11 @@ module.exports = {
         "A":"𝐀","B":"𝐁","C":"𝐂","D":"𝐃","E":"𝐄","F":"𝐅","G":"𝐆","H":"𝐇","I":"𝐈","J":"𝐉",
         "K":"𝐊","L":"𝐋","M":"𝐌","N":"𝐍","O":"𝐎","P":"𝐏","Q":"𝐐","R":"𝐑","S":"𝐒","T":"𝐓",
         "U":"𝐔","V":"𝐕","W":"𝐖","X":"𝐗","Y":"𝐘","Z":"𝐙",
-        "0":"𝟎","1":"𝟏","2":"𝟐","3":"𝟑","4":"𝟒","5":"𝟓","6":"𝟔","7":"𝟕","8":"𝟖","9":"𝟗",
-        " ":" ","'":"'",",":",",".":".","-":"-","!":"!","?":"?"
+        "0":"𝟎","1":"𝟏","2":"𝟐","3":"𝟑","4":"𝟒","5":"𝟓","6":"𝟔","7":"𝟕","8":"𝟖","9":"𝟗"
       };
       return text.split('').map(c => boldAlphabet[c] || c).join('');
     }
 
-    // Money formatter (K, M, B, T, Q)
     function formatMoney(num) {
       if (num >= 1e15) return (num / 1e15).toFixed(2).replace(/\.00$/, '') + "Q";
       if (num >= 1e12) return (num / 1e12).toFixed(2).replace(/\.00$/, '') + "T";
@@ -109,15 +97,13 @@ module.exports = {
     const styledAmount = toBoldUnicode(`$${formatMoney(amount)}`);
     const styledName = toBoldUnicode(recipientName);
 
-    return message.reply(
-      `✅ | 𝐒𝐮𝐜𝐜𝐞𝐬𝐬𝐟𝐮𝐥𝐥𝐲 𝐬𝐞𝐧𝐭 ${styledAmount} 𝐭𝐨 ${styledName}.`,
-      [],
-      {
-        mentions: [{
-          tag: `@${recipientName}`,
-          id: recipientID
-        }]
-      }
-    );
+    // Ekhane await use kora hoyeche jate process ta double trigger na hoy
+    return await message.reply({
+      body: `✅ | 𝐒𝐮𝐜𝐜𝐞𝐬𝐬𝐟𝐮𝐥𝐥𝐲 𝐬𝐞𝐧𝐭 ${styledAmount} 𝐭𝐨 ${styledName}.`,
+      mentions: [{
+        tag: recipientName,
+        id: recipientID
+      }]
+    });
   }
 };
