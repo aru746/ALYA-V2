@@ -2,15 +2,15 @@ const axios = require("axios");
 
 module.exports = {
   config: {
-    name: "flux11pro",
-    aliases: ["f11pro", "flux11"],
+    name: "flux6",
+    aliases: ["fx6", "flux6"],
     version: "1.0",
     author: "Neoaz ゐ", //API by RIFAT
     countDown: 10,
     role: 0,
     shortDescription: { en: "Generate AI image with Flux 1.1 Pro" },
     longDescription: { en: "Generate images using Flux 1.1 Pro AI model" },
-    category: "image",
+    category: "imagine",
     guide: {
       en: "{pn} <prompt>"
     }
