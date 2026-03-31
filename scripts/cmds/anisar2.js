@@ -27,7 +27,7 @@ module.exports = {
     version: "4.1",
     shortDescription: { en: "anime edit" },
     longDescription: { en: "random anime edit" },
-    category: "video",
+    category: "anime",
     guide: { en: "anisearch denji\nreply more" },
     onReply: true
   },
