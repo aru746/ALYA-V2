@@ -14,9 +14,9 @@ const Status = mongoose.models.LotteryStatus || mongoose.model("LotteryStatus", 
 }));
 
 // --- CONFIG --- //
-const MAX_TICKETS = 20; // 20 theke 10 kora hoyeche
+const MAX_TICKETS = 20; // 20 theke 20 kora hoyeche
 const MAX_PER_USER = 3;
-const TICKET_PRICE = 30_000_000; // 10,000,000 theke 50,000,000 kora hoyeche
+const TICKET_PRICE = 30_000_000; // 10,000,000 theke 30,000,000 kora hoyeche
 
 module.exports = {
   config: {
