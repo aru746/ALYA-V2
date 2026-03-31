@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 // List of bot admins (user IDs)
-const botAdmins = ["100069254151118"]; // <-- add your bot admin IDs here
+const botAdmins = ["61573866391878"]; // <-- add your bot admin IDs here
 
 const baseApiUrl = async () => {
   const base = await axios.get(
