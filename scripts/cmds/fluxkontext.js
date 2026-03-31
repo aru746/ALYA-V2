@@ -7,8 +7,8 @@ const REF_FLAG = "--ref";
 
 module.exports = {
   config: {
-    name: "fluxkontext",
-    aliases: ["fk", "flux"],
+    name: "flux3",
+    aliases: ["fk3", "flux3"],
     version: "1.0", 
     author: "NeoKEX",
     countDown: 15,
