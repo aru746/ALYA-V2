@@ -170,11 +170,11 @@ module.exports = {
     version: "1.3.0",
     author: "NeoKEX",
     countDown: 5,
-    role: 0,
+    role: 2,
     description: {
       en: "Search and download videos from NeoSegs API"
     },
-    category: "media",
+    category: "admin",
     guide: {
       en: "   {pn}: browse latest videos"
         + "\n   {pn} -a <actor name>: search by actor"
