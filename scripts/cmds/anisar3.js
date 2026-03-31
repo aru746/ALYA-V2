@@ -8,7 +8,7 @@ module.exports = {
     version: "0.0.7",
     author: "Azadx69x",
     role: 0,
-    category: "video",
+    category: "anime",
     shortDescription: "Fetch Anisearch video",
     longDescription: "Anisearch send a video",
     cooldown: 5
