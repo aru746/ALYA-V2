@@ -30,7 +30,7 @@ module.exports = {
         countDown: 30,
         role: 0,
         longDescription: "Generate or edit videos using Meta AI.",
-        category: "ai-video",
+        category: "fun",
         guide: {
             en: "To generate: {pn} <prompt>\nTo animate image: Reply to an image with {pn} <prompt>"
         }
