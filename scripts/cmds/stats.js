@@ -37,7 +37,7 @@ module.exports = {
 		longDescription: {
 			en: "View detailed performance metrics including memory usage, uptime, command stats, and active optimizations"
 		},
-		category: "system",
+		category: "group",
 		guide: {
 			en: "{pn} - View system stats\n{pn} clear - Trigger garbage collection"
 		}
