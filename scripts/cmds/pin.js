@@ -113,7 +113,7 @@ module.exports = {
     role: 0,
     shortDescription: "Search Pinterest for images",
     longDescription: "Search Pinterest for images, with canvas view for Browse.",
-    category: "Image",
+    category: "image",
     guide: {
       en: "{pn} query [-count]\n" +
         "• If count is used, it sends images directly.\n" +
