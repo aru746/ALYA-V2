@@ -2,15 +2,15 @@ const axios = require("axios");
 
 module.exports = {
   config: {
-    name: "fluxkontextproedit",
-    aliases: ["kontextproedit", "fkpe"],
+    name: "flux4",
+    aliases: ["flux4", "fx4"],
     version: "1.0",
     author: "Neoaz ゐ", //API by RIFAT
     countDown: 10,
     role: 0,
     shortDescription: { en: "Edit image with Flux Kontext Pro Edit" },
     longDescription: { en: "Edit images using Flux Kontext Pro Edit AI model" },
-    category: "image",
+    category: "imagine",
     guide: {
       en: "Reply to an image with: {pn} <prompt>"
     }
