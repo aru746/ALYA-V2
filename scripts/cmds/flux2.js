@@ -2,15 +2,15 @@ const axios = require("axios");
 
 module.exports = {
   config: {
-    name: "fluxkontextpro",
-    aliases: ["kontextpro", "fkp"],
+    name: "flux2",
+    aliases: ["flux2"],
     version: "1.0",
     author: "Neoaz ゐ", //API by RIFAT
     countDown: 10,
     role: 0,
     shortDescription: { en: "Generate AI image with Flux Kontext Pro" },
     longDescription: { en: "Generate images using Flux Kontext Pro AI model" },
-    category: "image",
+    category: "imagine",
     guide: {
       en: "{pn} <prompt>"
     }
