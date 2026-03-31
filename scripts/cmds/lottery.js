@@ -14,9 +14,9 @@ const Status = mongoose.models.LotteryStatus || mongoose.model("LotteryStatus", 
 }));
 
 // --- CONFIG --- //
-const MAX_TICKETS = 20;
+const MAX_TICKETS = 10; // 20 theke 10 kora hoyeche
 const MAX_PER_USER = 3;
-const TICKET_PRICE = 10_000_000; // 10M
+const TICKET_PRICE = 50_000_000; // 10,000,000 theke 50,000,000 kora hoyeche
 
 module.exports = {
   config: {
@@ -26,7 +26,7 @@ module.exports = {
     countDown: 5,
     role: 0,
     shortDescription: "Lottery game system",
-    longDescription: "Buy tickets, compete with others, draw winner (MongoDB).",
+    longDescription: "Buy tickets, compete with others, draw winner.",
     category: "game",
     guide: {
       en: "{pn} buy 1-3 | draw | info | status"
@@ -36,7 +36,6 @@ module.exports = {
   onStart: async function ({ message, event, usersData, args }) {
     const userId = event.senderID;
     const userData = await usersData.get(userId);
-    const userName = userData?.name || "Unknown";
     const subcmd = args[0];
 
     // BUY
@@ -59,6 +58,7 @@ module.exports = {
       const userBalance = userData?.money || 0;
       const cost = count * TICKET_PRICE;
       if (userBalance < cost) {
+        // Ekhane 1,000,000 diye bhag kore M unit e dekhano hoyeche (50M)
         return message.reply(
           `𝐁𝐚𝐛𝐲, 𝐘𝐨𝐮 𝐧𝐞𝐞𝐝 $${cost / 1_000_000}𝐌 𝐭𝐨 𝐛𝐮𝐲 ${count} 𝐭𝐢𝐜𝐤𝐞𝐭(𝐬).\n💼 𝐘𝐨𝐮 𝐡𝐚𝐯𝐞: $${userBalance / 1_000_000}𝐌`
         );
@@ -90,7 +90,7 @@ module.exports = {
 
       const tickets = await Ticket.find();
       const winnerTicket = tickets[Math.floor(Math.random() * tickets.length)];
-      const prize = TICKET_PRICE * MAX_TICKETS;
+      const prize = TICKET_PRICE * MAX_TICKETS; // 50M * 10 = 500M
 
       const winnerData = await usersData.get(winnerTicket.userId);
       const winnerBalance = winnerData?.money || 0;
