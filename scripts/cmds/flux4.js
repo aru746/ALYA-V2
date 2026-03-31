@@ -2,15 +2,15 @@ const axios = require("axios");
 
 module.exports = {
   config: {
-    name: "fluxdev",
-    aliases: ["flux1d", "flux1dev"],
+    name: "flux4",
+    aliases: ["flux4", "fx4"],
     version: "1.0",
     author: "Neoaz ゐ", //API by RIFAT
     countDown: 10,
     role: 0,
     shortDescription: { en: "Generate AI image with Flux 1 Dev" },
     longDescription: { en: "Generate images using Flux 1 Dev AI model" },
-    category: "image",
+    category: "imagine",
     guide: {
       en: "{pn} <prompt>"
     }
