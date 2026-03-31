@@ -10,7 +10,7 @@ module.exports = {
     role: 0,
     shortDescription: { en: "Generate AI image with Flux 1 Schnell" },
     longDescription: { en: "Generate images using Flux 1 Schnell AI model" },
-    category: "image",
+    category: "imagine",
     guide: {
       en: "{pn} <prompt>"
     }
