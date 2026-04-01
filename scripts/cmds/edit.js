@@ -10,7 +10,7 @@ module.exports = {
     version: "6.5",
     author: "Arafat",
     countDown: 10,
-    role: 2,
+    role: 3,
     shortDescription: { en: "AI Image Editor with Multi-Model support" },
     category: "image"
   },
