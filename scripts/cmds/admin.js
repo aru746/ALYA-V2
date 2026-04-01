@@ -19,10 +19,10 @@ module.exports = {
 
   langs: {
     en: {
-      added: "✔ Added admin role for %1 users:\n%2",
+      added: "✅ Added admin role for %1 users:\n%2",
       alreadyAdmin: "ℹ %1 users already have admin role:\n%2",
       missingIdAdd: "⚠ Please enter ID or tag user to add admin role",
-      removed: "✔ Removed admin role of %1 users:\n%2",
+      removed: "✅ Removed admin role of %1 users:\n%2",
       notAdmin: "ℹ %1 users don't have admin role:\n%2",
       missingIdRemove: "⚠ Please enter ID or tag user to remove admin role",
       listAdmin: "👑 𝐋𝐢𝐬𝐭 𝐨𝐟 𝐁𝐨𝐭 𝐀𝐝𝐦𝐢𝐧𝐬 👑\n\n%1"
