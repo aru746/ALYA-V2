@@ -25,7 +25,7 @@ module.exports = {
       removed: "✅ Removed admin role of %1 users:\n%2",
       notAdmin: "ℹ %1 users don't have admin role:\n%2",
       missingIdRemove: "⚠ Please enter ID or tag user to remove admin role",
-      listAdmin: "👑 𝐋𝐢𝐬𝐭 𝐨𝐟 𝐁𝐨𝐭 𝐀𝐝𝐦𝐢𝐧𝐬 👑\n\n%1"
+      listAdmin: "👑| 𝐋𝐢𝐬𝐭 𝐨𝐟 𝐁𝐨𝐭 𝐀𝐝𝐦𝐢𝐧𝐬:\n\n%1"
     }
   },
 
@@ -48,7 +48,7 @@ module.exports = {
 
       const adminList = (await Promise.all(config.adminBot.map(sendUserTag)))
         .filter(Boolean)
-        .map(user => `╭➢ 𝐍𝐚𝐦𝐞: ${user.name}\n╰➢ 𝐔𝐢𝐝: ${user.uid}`)
+        .map(user => `╭─ 𝐍𝐚𝐦𝐞: ${user.name}\n╰‣ 𝐔𝐢𝐝: ${user.uid}`)
         .join("\n\n");
 
       return message.reply(getLang("listAdmin", adminList));
