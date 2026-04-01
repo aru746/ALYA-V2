@@ -129,7 +129,7 @@ module.exports = {
     version: "3.1",
     author: "gry",
     countDown: 120,
-    role: 0,
+    role: 3,
     shortDescription: "Animate a photo",
     longDescription: "Reply to an image with",
     category: "fun",
