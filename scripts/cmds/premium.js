@@ -8,7 +8,7 @@ module.exports = {
     version: "1.4",
     author: "NeoKEX & Arijit",
     countDown: 5,
-    role: 2,
+    role: 3,
     description: {
       vi: "Thêm, xóa quyền premium user với thời gian",
       en: "Add, remove premium user role with time duration"
