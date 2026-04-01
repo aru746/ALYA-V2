@@ -107,7 +107,7 @@ module.exports = {
     name: "kiss2",
     version: "1.1.1",
     author: "Hina",
-    role: 0,
+    role: 3,
     description: "😘 Send a kiss animation with the person you reply to",
     category: "love",
     guide: "Reply to someone's message with: kiss"
