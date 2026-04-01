@@ -4,8 +4,8 @@ const { writeFileSync } = require("fs-extra");
 module.exports = {
   config: {
     name: "premium",
-    aliases: ["prem"],
-    version: "1.3",
+    aliases: ["pm"],
+    version: "1.4",
     author: "NeoKEX & Arijit",
     countDown: 5,
     role: 2,
@@ -25,9 +25,9 @@ module.exports = {
       added: "✅ Đã thêm quyền premium cho %1 người dùng:\n%2",
       alreadyPremium: "\n⚠ %1 người dùng đã có quyền premium: %2",
       missingIdAdd: "⚠ Vui lòng nhập ID hoặc tag",
-      removed: "✅  Đã xóa quyền premium cho %1 người dùng:\n%2",
+      removed: "✅ Đã xóa quyền premium cho %1 người dùng:\n%2",
       listPremium: "🌟| 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐌𝐞𝐦𝐛𝐞𝐫𝐬:\n\n%1",
-      invalidTime: "⚠  Định dạng thời gian không hợp lệ! (1d, 2h, 30m, permanent)",
+      invalidTime: "⚠ Định dạng thời gian không hợp lệ! (1d, 2h, 30m, permanent)",
       permanent: "Permanent",
       expired: "Expired"
     },
@@ -110,13 +110,16 @@ module.exports = {
         const expireTime = parseTime(timeStr);
         if (expireTime === false && timeStr !== "permanent") return message.reply(getLang("invalidTime"));
 
+        let addedNames = [];
         for (const uid of uids) {
           if (!config.premiumUsers.includes(uid)) config.premiumUsers.push(uid);
           await usersData.set(uid, expireTime, "data.premiumExpireTime");
+          const name = await usersData.getName(uid);
+          addedNames.push(name);
         }
 
         writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
-        return message.reply(getLang("added", uids.length, uids.map(id => `• ${id}`).join("\n")));
+        return message.reply(getLang("added", uids.length, addedNames.map(name => `• ${name}`).join("\n")));
       }
 
       case "list":
@@ -126,20 +129,24 @@ module.exports = {
           const expireTime = await usersData.get(uid, "data.premiumExpireTime");
           return `╭─ 𝐍𝐚𝐦𝐞: ${toBoldUnicode(name)}\n╰‣ 𝐄𝐱𝐩𝐢𝐫𝐞: ${getTimeRemaining(expireTime)}`;
         }));
+        if (premiumList.length == 0) return message.reply("No premium users found.");
         return message.reply(getLang("listPremium", premiumList.join("\n\n")));
       }
 
       case "remove":
       case "-r": {
         let uids = Object.keys(event.mentions).length > 0 ? Object.keys(event.mentions) : (event.messageReply ? [event.messageReply.senderID] : args.filter(arg => !isNaN(arg)));
+        let removedNames = [];
         for (const uid of uids) {
           if (config.premiumUsers.includes(uid)) {
+            const name = await usersData.getName(uid);
+            removedNames.push(name);
             config.premiumUsers.splice(config.premiumUsers.indexOf(uid), 1);
             await usersData.set(uid, null, "data.premiumExpireTime");
           }
         }
         writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
-        return message.reply(getLang("removed", uids.length, uids.join(", ")));
+        return message.reply(getLang("removed", removedNames.length, removedNames.map(name => `• ${name}`).join("\n")));
       }
 
       default:
