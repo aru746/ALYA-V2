@@ -6,7 +6,7 @@ module.exports = {
 		version: "1.7",
 		author: "NTKhang",
 		countDown: 5,
-		role: 2,
+		role: 4,
 		description: {
 			vi: "Test code nhanh (chỉ dành cho owner chính)",
 			en: "Test code quickly (only for main owner)"
