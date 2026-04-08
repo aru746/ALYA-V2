@@ -397,7 +397,7 @@ module.exports = function (api, threadModel, userModel, dashBoardModel, globalMo
                                         return;
                                 if (!hideNotiMessage.commandNotFound) {
                                         if (!commandName) {
-                                                return await message.reply(`🎀\n𝐓𝐡𝐞 𝐜𝐨𝐦𝐦𝐚𝐧𝐝 𝐲𝐨𝐮 𝐚𝐫𝐞 𝐮𝐬𝐢𝐧𝐠 𝐝𝐨𝐞𝐬 𝐧𝐨𝐭 𝐞𝐱𝐢𝐬𝐭, 𝐭𝐲𝐩𝐞「 ${prefix}𝐡𝐞𝐥𝐩 」𝐭𝐨 𝐬𝐞𝐞 𝐚𝐥𝐥 𝐚𝐯𝐚𝐢𝐥𝐚𝐛𝐥𝐞 𝐜𝐨𝐦𝐦𝐚𝐧𝐝𝐬.`);
+                                                return await message.reply(`>🎀\n𝐓𝐡𝐞 𝐜𝐨𝐦𝐦𝐚𝐧𝐝 𝐲𝐨𝐮 𝐚𝐫𝐞 𝐮𝐬𝐢𝐧𝐠 𝐝𝐨𝐞𝐬 𝐧𝐨𝐭 𝐞𝐱𝐢𝐬𝐭, 𝐭𝐲𝐩𝐞「 ${prefix}𝐡𝐞𝐥𝐩 」𝐭𝐨 𝐬𝐞𝐞 𝐚𝐥𝐥 𝐚𝐯𝐚𝐢𝐥𝐚𝐛𝐥𝐞 𝐜𝐨𝐦𝐦𝐚𝐧𝐝𝐬.`);
                                         }
                                         
                                         // Optimized command suggestion with caching and quick checks
