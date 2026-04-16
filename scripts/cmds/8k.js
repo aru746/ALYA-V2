@@ -83,7 +83,7 @@ module.exports = {
       
       // 5. Reply with the final image
       await message.reply({
-        body: `Image successfully upscaled to 4K!`,
+        body: `Image successfully upscaled to 8K!`,
         attachment: fs.createReadStream(tempFilePath)
       });
 
