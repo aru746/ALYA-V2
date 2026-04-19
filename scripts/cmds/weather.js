@@ -1,127 +1,116 @@
 const axios = require("axios");
-const moment = require("moment-timezone");
-const Canvas = require("canvas");
-const fs = require("fs-extra");
+const fs = require("fs");
+const path = require("path");
 
-Canvas.registerFont(
-	__dirname + "/assets/font/BeVietnamPro-SemiBold.ttf", {
-	family: "BeVietnamPro-SemiBold"
-});
-Canvas.registerFont(
-	__dirname + "/assets/font/BeVietnamPro-Regular.ttf", {
-	family: "BeVietnamPro-Regular"
-});
-
-function convertFtoC(F) {
-	return Math.floor((F - 32) / 1.8);
-}
-function formatHours(hours) {
-	return moment(hours).tz("Asia/Ho_Chi_Minh").format("HH[h]mm[p]");
-}
+const mahmud = async () => {
+        const base = await axios.get("https://raw.githubusercontent.com/mahmudx7/exe/main/baseApiUrl.json");
+        return base.data.mahmud;
+};
 
 module.exports = {
-	config: {
-		name: "weather",
-		version: "1.1",
-		author: "NTKhang",
-		countDown: 5,
-		role: 0,
-		shortDescription: {
-			vi: "dự báo thời tiết",
-			en: "weather forecast"
-		},
-		longDescription: {
-			vi: "xem dự báo thời tiết hiện tại và 5 ngày sau",
-			en: "view the current and next 5 days weather forecast"
-		},
-		category: "group",
-		guide: {
-			vi: "{pn} <địa điểm>",
-			en: "{pn} <location>"
-		},
-		envGlobal: {
-			weatherApiKey: "d7e795ae6a0d44aaa8abb1a0a7ac19e4"
-		}
-	},
+        config: {
+                name: "weather",               
+                version: "1.7",
+                author: "MahMUD",
+                countDown: 5,
+                role: 0,
+                description: {
+                        bn: "যেকোনো জায়গার আবহাওয়ার তথ্য দেখুন",
+                        en: "Check weather information for any location",
+                        vi: "Xem thông tin thời tiết cho bất kỳ địa điểm nào"
+                },
+                category: "utility",
+                guide: {
+                        bn: '   {pn} <জায়গার নাম>: (যেমন: {pn} Dhaka)',
+                        en: '   {pn} <location>: (Ex: {pn} London)',
+                        vi: '   {pn} <địa điểm>: (VD: {pn} Hanoi)'
+                }
+        },
 
-	langs: {
-		vi: {
-			syntaxError: "Vui lòng nhập địa điểm",
-			notFound: "Không thể tìm thấy địa điểm: %1",
-			error: "Đã xảy ra lỗi: %1",
-			today: "Thời tiết hôm nay: %1\n%2\n🌡 Nhiệt độ thấp nhất - cao nhất %3°C - %4°C\n🌡 Nhiệt độ cảm nhận được %5°C - %6°C\n🌅 Mặt trời mọc %7\n🌄 Mặt trời lặn %8\n🌃 Mặt trăng mọc %9\n🏙️ Mặt trăng lặn %10\n🌞 Ban ngày: %11\n🌙 Ban đêm: %12"
-		},
-		en: {
-			syntaxError: "Please enter a location",
-			notFound: "Location not found: %1",
-			error: "An error has occurred: %1",
-			today: "Today's weather: %1\n%2\n🌡 Low - high temperature %3°C - %4°C\n🌡 Feels like %5°C - %6°C\n🌅 Sunrise %7\n🌄 Sunset %8\n🌃 Moonrise %9\n🏙️ Moonset %10\n🌞 Day: %11\n🌙 Night: %12"
-		}
-	},
+        langs: {
+                bn: {
+                        noInput: "× বেবি, জায়গার নাম দাও!\n\nউদাহরণ: {pn} Dhaka",
+                        notFound: "× দুঃখিত, %1 খুঁজে পাওয়া যায়নি।",
+                        error: "× সমস্যা হয়েছে: %1। প্রয়োজনে Contact MahMUD।",
+                        today: "আজকের আবহাওয়া: %1\n%2\n🌡 সর্বনিম্ন - সর্বোচ্চ: %3°C - %4°C\n🌡 অনুভূত হবে: %5°C - %6°C\n🌅 সূর্যোদয়: %7\n🌄 সূর্যাস্ত: %8\n🌃 চন্দ্রোদয়: %9\n🏙 চন্দ্রাস্ত: %10\n🌞 দিন: %11\n🌙 রাত: %12"
+                },
+                en: {
+                        noInput: "× Baby, please enter a location\n\nExample: {pn} Dhaka",
+                        notFound: "× Location not found: %1",
+                        error: "× API error: %1. Contact MahMUD for help.",
+                        today: "Today's weather: %1\n%2\n🌡 Low - high temperature %3°C - %4°C\n🌡 Feels like %5°C - %6°C\n🌅 Sunrise %7\n🌄 Sunset %8\n🌃 Moonrise %9\n🏙 Moonset %10\n🌞 Day: %11\n🌙 Night: %12"
+                },
+                vi: {
+                        noInput: "× Cưng ơi, vui lòng nhập địa điểm\n\nVí dụ: {pn} Hanoi",
+                        notFound: "× Không thể tìm thấy địa điểm: %1",
+                        error: "× Lỗi: %1. Liên hệ MahMUD để hỗ trợ.",
+                        today: "Thời tiết hôm nay: %1\n%2\n🌡 Nhiệt độ thấp nhất - cao nhất %3°C - %4°C\n🌡 Nhiệt độ cảm nhận được %5°C - %6°C\n🌅 Mặt trời mọc %7\n🌄 Mặt trời lặn %8\n🌃 Mặt trăng mọc %9\n🏙 Mặt trăng lặn %10\n🌞 Ban ngày: %11\n🌙 Ban đêm: %12"
+                }
+        },
 
-	onStart: async function ({ args, message, envGlobal, getLang }) {
-		const apikey = envGlobal.weatherApiKey;
+        onStart: async function ({ api, event, args, message, getLang }) {
+                const authorName = String.fromCharCode(77, 97, 104, 77, 85, 68);
+                if (this.config.author !== authorName) {
+                        return api.sendMessage("You are not authorized to change the author name.", event.threadID, event.messageID);
+                }
 
-		const area = args.join(" ");
-		if (!area)
-			return message.reply(getLang("syntaxError"));
-		let areaKey, dataWeather, areaName;
+                if (!args.length) return message.reply(getLang("noInput"));
 
-		try {
-			const response = (await axios.get(`https://api.accuweather.com/locations/v1/cities/search.json?q=${encodeURIComponent(area)}&apikey=${apikey}&language=vi-vn`)).data;
-			if (response.length == 0)
-				return message.reply(getLang("notFound", area));
-			const data = response[0];
-			areaKey = data.Key;
-			areaName = data.LocalizedName;
-		}
-		catch (err) {
-			return message.reply(getLang("error", err.response.data.Message));
-		}
+                const location = args.join(" ");
+                const cachePath = path.join(__dirname, "cache", `weather_${event.threadID}.png`);
 
-		try {
-			dataWeather = (await axios.get(`http://api.accuweather.com/forecasts/v1/daily/10day/${areaKey}?apikey=${apikey}&details=true&language=vi`)).data;
-		}
-		catch (err) {
-			return message.reply(`❌ Đã xảy ra lỗi: ${err.response.data.Message}`);
-		}
+                try {
+                        api.setMessageReaction("⏳", event.messageID, () => {}, true);
 
-		const dataWeatherDaily = dataWeather.DailyForecasts;
-		const dataWeatherToday = dataWeatherDaily[0];
-		const msg = getLang("today", areaName, dataWeather.Headline.Text, convertFtoC(dataWeatherToday.Temperature.Minimum.Value), convertFtoC(dataWeatherToday.Temperature.Maximum.Value), convertFtoC(dataWeatherToday.RealFeelTemperature.Minimum.Value), convertFtoC(dataWeatherToday.RealFeelTemperature.Maximum.Value), formatHours(dataWeatherToday.Sun.Rise), formatHours(dataWeatherToday.Sun.Set), formatHours(dataWeatherToday.Moon.Rise), formatHours(dataWeatherToday.Moon.Set), dataWeatherToday.Day.LongPhrase, dataWeatherToday.Night.LongPhrase);
+                        const apiBase = await mahmud();
+                        const res = await axios.get(`${apiBase}/api/weather?location=${encodeURIComponent(location)}`);
+                        const data = res.data;
 
-		const bg = await Canvas.loadImage(__dirname + "/assets/image/bgWeather.jpg");
-		const { width, height } = bg;
-		const canvas = Canvas.createCanvas(width, height);
-		const ctx = canvas.getContext("2d");
-		ctx.drawImage(bg, 0, 0, width, height);
-		let X = 100;
-		ctx.fillStyle = "#ffffff";
-		const data = dataWeather.DailyForecasts.slice(0, 7);
-		for (const item of data) {
-			const icon = await Canvas.loadImage("http://vortex.accuweather.com/adc2010/images/slate/icons/" + item.Day.Icon + ".svg");
-			ctx.drawImage(icon, X, 210, 80, 80);
+                        if (data.success !== true) {
+                                api.setMessageReaction("❌", event.messageID, () => {}, true);
+                                return message.reply(getLang("notFound", location));
+                        }
 
-			ctx.font = "30px BeVietnamPro-SemiBold";
-			const maxC = `${convertFtoC(item.Temperature.Maximum.Value)}°C `;
-			ctx.fillText(maxC, X, 366);
+                        const d = data.data;
+                        const msg = getLang(
+                                "today",
+                                d.area,
+							    d.headline,
+							    d.tempMin,
+							    d.tempMax, 
+							    d.feelsMin, 
+							    d.feelsMax,
+                                d.sunrise, 
+							    d.sunset,
+							    d.moonrise, 
+							    d.moonset, 
+							    d.day,
+							    d.night
+                        );
 
-			ctx.font = "30px BeVietnamPro-Regular";
-			const minC = String(`${convertFtoC(item.Temperature.Minimum.Value)}°C`);
-			const day = moment(item.Date).format("DD");
-			ctx.fillText(minC, X, 445);
-			ctx.fillText(day, X + 20, 140);
+                        if (!fs.existsSync(path.join(__dirname, "cache"))) {
+                                fs.mkdirSync(path.join(__dirname, "cache"));
+                        }
 
-			X += 135;
-		}
+                        const base64Data = data.image.replace(/^data:image\/\w+;base64,/, "");
+                        fs.writeFileSync(cachePath, Buffer.from(base64Data, 'base64'));
 
-		const pathSaveImg = `${__dirname}/tmp/weather_${areaKey}.jpg`;
-		fs.writeFileSync(pathSaveImg, canvas.toBuffer());
+                        await message.reply({
+                                body: msg,
+                                attachment: fs.createReadStream(cachePath)
+                        });
 
-		return message.reply({
-			body: msg,
-			attachment: fs.createReadStream(pathSaveImg)
-		}, () => fs.unlinkSync(pathSaveImg));
+                        if (fs.existsSync(cachePath)) {
+                                fs.unlinkSync(cachePath);
+                        }
 
-	}
+                        api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+                } catch (err) {
+                        console.error("Weather Error:", err);
+                        api.setMessageReaction("❌", event.messageID, () => {}, true);
+                        const errorMsg = err.response?.data?.error || err.message;
+                        return message.reply(getLang("error", errorMsg));
+                }
+        }
 };
