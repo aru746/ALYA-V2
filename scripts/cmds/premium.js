@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "premium",
     aliases: ["pm"],
-    version: "1.4",
+    version: "1.5",
     author: "NeoKEX & Arijit",
     countDown: 5,
     role: 3,
@@ -23,20 +23,18 @@ module.exports = {
   langs: {
     vi: {
       added: "✅ Đã thêm quyền premium cho %1 người dùng:\n%2",
-      alreadyPremium: "\n⚠ %1 người dùng đã có quyền premium: %2",
       missingIdAdd: "⚠ Vui lòng nhập ID hoặc tag",
       removed: "✅ Đã xóa quyền premium cho %1 người dùng:\n%2",
-      listPremium: "🌟| 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐌𝐞𝐦𝐛𝐞𝐫𝐬:\n\n%1",
+      listPremium: "🎖️| 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐌𝐞𝐦𝐛𝐞𝐫𝐬:\n\n%1",
       invalidTime: "⚠ Định dạng thời gian không hợp lệ! (1d, 2h, 30m, permanent)",
       permanent: "Permanent",
       expired: "Expired"
     },
     en: {
       added: "✅ 𝐀𝐝𝐝𝐞𝐝 𝐩𝐫𝐞𝐦𝐢𝐮𝐦 𝐫𝐨𝐥𝐞 𝐟𝐨𝐫 %1 𝐮𝐬𝐞𝐫𝐬:\n%2",
-      alreadyPremium: "\n⚠ %1 𝐮𝐬𝐞𝐫𝐬 𝐚𝐥𝐫𝐞𝐚𝐝𝐲 𝐡𝐚𝐯𝐞 𝐩𝐫𝐞𝐦𝐢𝐮𝐦 𝐫𝐨𝐥𝐞: %2",
       missingIdAdd: "⚠ 𝐏𝐥𝐞𝐚𝐬𝐞 𝐞𝐧𝐭𝐞𝐫 𝐈𝐃 𝐨𝐫 𝐭𝐚𝐠",
       removed: "✅ 𝐑𝐞𝐦𝐨𝐯𝐞𝐝 𝐩𝐫𝐞𝐦𝐢𝐮𝐦 𝐫𝐨𝐥𝐞 𝐟𝐨𝐫 %1 𝐮𝐬𝐞𝐫𝐬:\n%2",
-      listPremium: "🌟| 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐌𝐞𝐦𝐛𝐞𝐫𝐬:\n\n%1",
+      listPremium: "🎖️| 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐌𝐞𝐦𝐛𝐞𝐫𝐬:\n\n%1",
       invalidTime: "⚠ 𝐈𝐧𝐯𝐚𝐥𝐢𝐝 𝐭𝐢𝐦𝐞 𝐟𝐨𝐫𝐦𝐚𝐭! (1d, 2h, 30m, permanent)",
       permanent: "Permanent",
       expired: "Expired"
@@ -76,7 +74,6 @@ module.exports = {
       const days = Math.floor(remaining / 86400000);
       const hours = Math.floor((remaining % 86400000) / 3600000);
       const minutes = Math.floor((remaining % 3600000) / 60000);
-      
       let res = "";
       if (days > 0) res += `${days}d/`;
       if (hours > 0 || days > 0) res += `${hours}h/`;
@@ -84,14 +81,19 @@ module.exports = {
       return toBoldUnicode(res);
     };
 
-    // Auto cleanup expired
+    // --- Critical Update: Better Cleanup & Data Persistence ---
+    let isChanged = false;
     for (const uid of [...config.premiumUsers]) {
-      const exp = await usersData.get(uid, "data.premiumExpireTime");
-      if (exp && exp - Date.now() <= 0) {
+      const userData = await usersData.get(uid);
+      const exp = userData.data?.premiumExpireTime;
+      if (exp && exp !== null && exp - Date.now() <= 0) {
         config.premiumUsers.splice(config.premiumUsers.indexOf(uid), 1);
-        await usersData.set(uid, null, "data.premiumExpireTime");
+        await usersData.set(uid, { ...userData.data, premiumExpireTime: null }, "data");
+        isChanged = true;
       }
     }
+    if (isChanged) writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
+    // ---------------------------------------------------------
 
     switch (args[0]) {
       case "add":
@@ -113,7 +115,8 @@ module.exports = {
         let addedNames = [];
         for (const uid of uids) {
           if (!config.premiumUsers.includes(uid)) config.premiumUsers.push(uid);
-          await usersData.set(uid, expireTime, "data.premiumExpireTime");
+          const userData = await usersData.get(uid);
+          await usersData.set(uid, { ...userData.data, premiumExpireTime: expireTime }, "data");
           const name = await usersData.getName(uid);
           addedNames.push(name);
         }
@@ -126,7 +129,8 @@ module.exports = {
       case "-l": {
         const premiumList = await Promise.all(config.premiumUsers.map(async uid => {
           const name = await usersData.getName(uid);
-          const expireTime = await usersData.get(uid, "data.premiumExpireTime");
+          const userData = await usersData.get(uid);
+          const expireTime = userData.data?.premiumExpireTime;
           return `╭─ 𝐍𝐚𝐦𝐞: ${toBoldUnicode(name)}\n╰‣ 𝐄𝐱𝐩𝐢𝐫𝐞: ${getTimeRemaining(expireTime)}`;
         }));
         if (premiumList.length == 0) return message.reply("No premium users found.");
@@ -142,7 +146,8 @@ module.exports = {
             const name = await usersData.getName(uid);
             removedNames.push(name);
             config.premiumUsers.splice(config.premiumUsers.indexOf(uid), 1);
-            await usersData.set(uid, null, "data.premiumExpireTime");
+            const userData = await usersData.get(uid);
+            await usersData.set(uid, { ...userData.data, premiumExpireTime: null }, "data");
           }
         }
         writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
