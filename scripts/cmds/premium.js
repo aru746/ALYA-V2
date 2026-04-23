@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "premium",
     aliases: ["pm"],
-    version: "1.5",
+    version: "1.7",
     author: "NeoKEX & Arijit",
     countDown: 5,
     role: 3,
@@ -81,11 +81,10 @@ module.exports = {
       return toBoldUnicode(res);
     };
 
-    // --- Critical Update: Better Cleanup & Data Persistence ---
     let isChanged = false;
     for (const uid of [...config.premiumUsers]) {
       const userData = await usersData.get(uid);
-      const exp = userData.data?.premiumExpireTime;
+      const exp = userData?.data?.premiumExpireTime;
       if (exp && exp !== null && exp - Date.now() <= 0) {
         config.premiumUsers.splice(config.premiumUsers.indexOf(uid), 1);
         await usersData.set(uid, { ...userData.data, premiumExpireTime: null }, "data");
@@ -93,7 +92,6 @@ module.exports = {
       }
     }
     if (isChanged) writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
-    // ---------------------------------------------------------
 
     switch (args[0]) {
       case "add":
@@ -112,17 +110,19 @@ module.exports = {
         const expireTime = parseTime(timeStr);
         if (expireTime === false && timeStr !== "permanent") return message.reply(getLang("invalidTime"));
 
-        let addedNames = [];
+        let addedDetails = [];
+        const durationDisplay = timeStr === "permanent" ? getLang("permanent") : timeStr;
+
         for (const uid of uids) {
           if (!config.premiumUsers.includes(uid)) config.premiumUsers.push(uid);
           const userData = await usersData.get(uid);
-          await usersData.set(uid, { ...userData.data, premiumExpireTime: expireTime }, "data");
+          await usersData.set(uid, { ...userData?.data, premiumExpireTime: expireTime }, "data");
           const name = await usersData.getName(uid);
-          addedNames.push(name);
+          addedDetails.push(`• ${name} (${durationDisplay})`);
         }
 
         writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
-        return message.reply(getLang("added", uids.length, addedNames.map(name => `• ${name}`).join("\n")));
+        return message.reply(getLang("added", uids.length, addedDetails.join("\n")));
       }
 
       case "list":
@@ -130,7 +130,7 @@ module.exports = {
         const premiumList = await Promise.all(config.premiumUsers.map(async uid => {
           const name = await usersData.getName(uid);
           const userData = await usersData.get(uid);
-          const expireTime = userData.data?.premiumExpireTime;
+          const expireTime = userData?.data?.premiumExpireTime;
           return `╭─ 𝐍𝐚𝐦𝐞: ${toBoldUnicode(name)}\n╰‣ 𝐄𝐱𝐩𝐢𝐫𝐞: ${getTimeRemaining(expireTime)}`;
         }));
         if (premiumList.length == 0) return message.reply("No premium users found.");
@@ -147,7 +147,7 @@ module.exports = {
             removedNames.push(name);
             config.premiumUsers.splice(config.premiumUsers.indexOf(uid), 1);
             const userData = await usersData.get(uid);
-            await usersData.set(uid, { ...userData.data, premiumExpireTime: null }, "data");
+            await usersData.set(uid, { ...userData?.data, premiumExpireTime: null }, "data");
           }
         }
         writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
