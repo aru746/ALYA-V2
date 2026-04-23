@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "developer",
     aliases: ["dev"],
-    version: "1.2",
+    version: "1.3",
     author: "NeoKEX & Arijit",
     countDown: 5,
     role: 4,
@@ -23,7 +23,6 @@ module.exports = {
   langs: {
     vi: {
       added: "✅ Đã thêm quyền developer cho %1 người dùng:\n%2",
-      alreadyDev: "\n⚠ %1 người dùng đã có quyền developer: %2",
       missingIdAdd: "⚠ Vui lòng nhập ID hoặc tag",
       removed: "✅ Đã xóa quyền developer cho %1 người dùng:\n%2",
       listDev: "🔰| 𝐃𝐞𝐯𝐞𝐥𝐨𝐩𝐞𝐫 𝐋𝐢𝐬𝐭:\n\n%1",
@@ -33,7 +32,6 @@ module.exports = {
     },
     en: {
       added: "✅ 𝐀𝐝𝐝𝐞𝐝 𝐝𝐞𝐯𝐞𝐥𝐨𝐩𝐞𝐫 𝐫𝐨𝐥𝐞 𝐟𝐨𝐫 %1 𝐮𝐬𝐞𝐫𝐬:\n%2",
-      alreadyDev: "\n⚠ %1 𝐮𝐬𝐞𝐫𝐬 𝐚𝐥𝐫𝐞𝐚𝐝𝐲 𝐡𝐚𝐯𝐞 𝐝𝐞𝐯𝐞𝐥𝐨𝐩𝐞𝐫 𝐫𝐨𝐥𝐞: %2",
       missingIdAdd: "⚠ 𝐏𝐥𝐞𝐚𝐬𝐞 𝐞𝐧𝐭𝐞𝐫 𝐈𝐃 𝐨𝐫 𝐭𝐚𝐠",
       removed: "✅ 𝐑𝐞𝐦𝐨𝐯𝐞𝐝 𝐝𝐞𝐯𝐞𝐥𝐨𝐩𝐞𝐫 𝐫𝐨𝐥𝐞 𝐟𝐨𝐫 %1 𝐮𝐬𝐞𝐫𝐬:\n%2",
       listDev: "🔰| 𝐃𝐞𝐯𝐞𝐥𝐨𝐩𝐞𝐫 𝐋𝐢𝐬𝐭:\n\n%1",
@@ -46,7 +44,6 @@ module.exports = {
   onStart: async function ({ message, args, usersData, event, getLang }) {
     if (!config.devUsers) config.devUsers = [];
 
-    // Unicode Bold Function
     function toBoldUnicode(text) {
       const boldAlphabet = {
         "a": "𝐚", "b": "𝐛", "c": "𝐜", "d": "𝐝", "e": "𝐞", "f": "𝐟", "g": "𝐠", "h": "𝐡", "i": "𝐢", "j": "𝐣",
@@ -77,7 +74,6 @@ module.exports = {
       const days = Math.floor(remaining / 86400000);
       const hours = Math.floor((remaining % 86400000) / 3600000);
       const minutes = Math.floor((remaining % 3600000) / 60000);
-      
       let res = "";
       if (days > 0) res += `${days}d/`;
       if (hours > 0 || days > 0) res += `${hours}h/`;
@@ -85,14 +81,18 @@ module.exports = {
       return toBoldUnicode(res);
     };
 
-    // Auto cleanup expired developers
+    // --- Data Persistence & Cleanup Logic ---
+    let isChanged = false;
     for (const uid of [...config.devUsers]) {
-      const exp = await usersData.get(uid, "data.devExpireTime");
-      if (exp && exp - Date.now() <= 0) {
+      const userData = await usersData.get(uid);
+      const exp = userData?.data?.devExpireTime;
+      if (exp && exp !== null && exp - Date.now() <= 0) {
         config.devUsers.splice(config.devUsers.indexOf(uid), 1);
-        await usersData.set(uid, null, "data.devExpireTime");
+        await usersData.set(uid, { ...userData.data, devExpireTime: null }, "data");
+        isChanged = true;
       }
     }
+    if (isChanged) writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
 
     switch (args[0]) {
       case "add":
@@ -112,11 +112,14 @@ module.exports = {
         if (expireTime === false && timeStr !== "permanent") return message.reply(getLang("invalidTime"));
 
         let addedDetails = [];
+        const durationDisplay = timeStr === "permanent" ? getLang("permanent") : timeStr;
+
         for (const uid of uids) {
           if (!config.devUsers.includes(uid)) config.devUsers.push(uid);
-          await usersData.set(uid, expireTime, "data.devExpireTime");
+          const userData = await usersData.get(uid);
+          await usersData.set(uid, { ...userData?.data, devExpireTime: expireTime }, "data");
           const name = await usersData.getName(uid);
-          addedDetails.push(`• ${name} (${uid})`);
+          addedDetails.push(`• ${name} (${durationDisplay})`);
         }
 
         writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
@@ -127,7 +130,8 @@ module.exports = {
       case "-l": {
         const devList = await Promise.all(config.devUsers.map(async uid => {
           const name = await usersData.getName(uid);
-          const expireTime = await usersData.get(uid, "data.devExpireTime");
+          const userData = await usersData.get(uid);
+          const expireTime = userData?.data?.devExpireTime;
           return `╭─ 𝐍𝐚𝐦𝐞: ${toBoldUnicode(name)}\n╰‣ 𝐄𝐱𝐩𝐢𝐫𝐞: ${getTimeRemaining(expireTime)}`;
         }));
         if (devList.length == 0) return message.reply("No developers found.");
@@ -143,7 +147,8 @@ module.exports = {
             const name = await usersData.getName(uid);
             removedNames.push(name);
             config.devUsers.splice(config.devUsers.indexOf(uid), 1);
-            await usersData.set(uid, null, "data.devExpireTime");
+            const userData = await usersData.get(uid);
+            await usersData.set(uid, { ...userData?.data, devExpireTime: null }, "data");
           }
         }
         writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
