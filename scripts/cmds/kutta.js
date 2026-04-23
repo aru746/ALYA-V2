@@ -3,11 +3,13 @@ const path = require("path");
 const axios = require("axios");
 const jimp = require("jimp");
 
+const OWNER_ID = "61573866391878"; // ✅ Your UID
+
 module.exports = {
   config: {
     name: "kutta",
-    version: "1.0.2",
-    author: "NAFIJ PRO",
+    version: "1.0.5",
+    author: "NAFIJ PRO (Fixed)",
     countDown: 5,
     role: 0,
     shortDescription: "Make someone a kutta 😂",
@@ -34,43 +36,39 @@ module.exports = {
       }
 
       // 🛡️ Owner Protection
-      const OWNER_UID = "61573866391878";
-      if (targetID === OWNER_UID) {
+      if (targetID === OWNER_ID) {
         return message.reply("🚫 You can’t make the owner a kutta! Respect the boss 😎");
       }
 
-      const baseFolder = path.join(__dirname, "NAFIJ");
+      const baseFolder = path.join(__dirname, "cache");
       const bgPath = path.join(baseFolder, "kutta_bg.jpg");
-      const avatarPath = path.join(baseFolder, `avatar_${targetID}.png`);
-      const outputPath = path.join(baseFolder, `kutta_result_${targetID}.png`);
+      const outputPath = path.join(baseFolder, `kutta_result_${targetID}_${Date.now()}.png`);
 
-      if (!fs.existsSync(baseFolder)) fs.mkdirSync(baseFolder);
+      if (!fs.existsSync(baseFolder)) fs.mkdirSync(baseFolder, { recursive: true });
 
       // 🐶 Auto-download kutta template if not found
       if (!fs.existsSync(bgPath)) {
         const kuttaURL = "https://raw.githubusercontent.com/alkama844/res/refs/heads/main/image/kutta.jpeg";
         const kuttaImg = await axios.get(kuttaURL, { responseType: "arraybuffer" });
-        fs.writeFileSync(bgPath, kuttaImg.data);
+        fs.writeFileSync(bgPath, Buffer.from(kuttaImg.data));
       }
 
-      // Download user's avatar
-      const avatarBuffer = (
-        await axios.get(
-          `https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
-          { responseType: "arraybuffer" }
-        )
-      ).data;
-      await fs.writeFile(avatarPath, avatarBuffer);
-
-      const avatarImg = await jimp.read(avatarPath);
-      avatarImg.resize(130, 130); // Adjust to fit dog's face
-
       const bg = await jimp.read(bgPath);
-      bg.resize(619, 495); // Resize to standard (your image size)
+      bg.resize(619, 495);
+
+      // ✅ Working Token & API
+      const TOKEN = "6628568379|c1e620fa708a1d5696fb991c1bde5662";
+      const avatarURL = `https://graph.facebook.com/${targetID}/picture?width=720&height=720&access_token=${TOKEN}`;
+
+      const avatarData = await axios.get(avatarURL, { responseType: "arraybuffer" });
+      const avatarImg = await jimp.read(Buffer.from(avatarData.data));
+
+      // Image-ke round shape kora ebong resize kora
+      avatarImg.resize(140, 140).circle(); 
 
       // 🧠 Position avatar over white dog's face
-      const x = 360;
-      const y = 300;
+      const x = 355; 
+      const y = 305; 
       bg.composite(avatarImg, x, y);
 
       await bg.writeAsync(outputPath);
@@ -85,13 +83,12 @@ module.exports = {
           attachment: fs.createReadStream(outputPath),
         },
         () => {
-          fs.unlinkSync(avatarPath);
-          fs.unlinkSync(outputPath);
+          if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
         }
       );
     } catch (err) {
       console.error("❌ Kutta command error:", err);
-      message.reply("❌ Error occurred while kutta-fying.");
+      message.reply("❌ Error occurred while processing image.");
     }
   },
 };
