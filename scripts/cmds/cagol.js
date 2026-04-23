@@ -9,7 +9,7 @@ const OWNER_UID = "61573866391878";
 module.exports = {
   config: {
     name: "cagol",
-    version: "1.0.2",
+    version: "1.0.3",
     author: "NAFIJ PRO + Arijit",
     countDown: 5,
     role: 0,
@@ -22,50 +22,49 @@ module.exports = {
   },
 
   onStart: async function ({ event, message, api }) {
-
     let targetID = Object.keys(event.mentions)[0];
     if (event.type === "message_reply") {
       targetID = event.messageReply.senderID;
     }
 
-    if (!targetID)
+    if (!targetID) {
       return message.reply("🐐 Tag or reply to someone to make them a cagol!");
+    }
 
-    // 🔒 OWNER PROTECTION (Owner cannot be targeted)
+    // 🔒 OWNER PROTECTION
     if (targetID === OWNER_UID) {
       return message.reply("👑 | Owner ke cagol banano jabe na 😎");
     }
 
-    const baseFolder = path.join(__dirname, "NAFIJ_cagol");
+    const baseFolder = path.join(__dirname, "cache");
     const bgPath = path.join(baseFolder, "cagol_bg.jpeg");
-    const avatarPath = path.join(baseFolder, `avatar_${targetID}.png`);
-    const outputPath = path.join(baseFolder, `cagol_result_${targetID}.png`);
+    const outputPath = path.join(baseFolder, `cagol_result_${targetID}_${Date.now()}.png`);
 
     try {
-      if (!fs.existsSync(baseFolder)) fs.mkdirSync(baseFolder);
+      if (!fs.existsSync(baseFolder)) fs.mkdirSync(baseFolder, { recursive: true });
 
+      // ✅ Download template if missing
       const goatImageURL = "https://raw.githubusercontent.com/alkama844/res/refs/heads/main/image/cagol.jpeg";
       if (!fs.existsSync(bgPath)) {
         const res = await axios.get(goatImageURL, { responseType: "arraybuffer" });
-        fs.writeFileSync(bgPath, res.data);
+        fs.writeFileSync(bgPath, Buffer.from(res.data));
       }
 
-      const avatarBuffer = (
-        await axios.get(
-          `https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
-          { responseType: "arraybuffer" }
-        )
-      ).data;
-      fs.writeFileSync(avatarPath, avatarBuffer);
-
       const bg = await jimp.read(bgPath);
-      const avatar = await jimp.read(avatarPath);
 
+      // ✅ Working Graph API & Token
+      const TOKEN = "6628568379|c1e620fa708a1d5696fb991c1bde5662";
+      const avatarURL = `https://graph.facebook.com/${targetID}/picture?width=720&height=720&access_token=${TOKEN}`;
+
+      const avatarData = await axios.get(avatarURL, { responseType: "arraybuffer" });
+      const avatar = await jimp.read(Buffer.from(avatarData.data));
+
+      // Resize and round
       avatar.resize(100, 100).circle();
 
+      // 🧠 Composite
       const x = 170;
       const y = 80;
-
       bg.composite(avatar, x, y);
 
       await bg.writeAsync(outputPath);
@@ -78,7 +77,6 @@ module.exports = {
         mentions: [{ tag: name, id: targetID }],
         attachment: fs.createReadStream(outputPath),
       }, () => {
-        if (fs.existsSync(avatarPath)) fs.unlinkSync(avatarPath);
         if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
       });
 
