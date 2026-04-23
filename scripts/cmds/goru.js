@@ -3,11 +3,13 @@ const path = require("path");
 const axios = require("axios");
 const jimp = require("jimp");
 
+const OWNER_ID = "61573866391878"; // ✅ Your UID
+
 module.exports = {
   config: {
     name: "goru",
-    version: "2.0.0",
-    author: "NAFIJ PRO",
+    version: "2.0.1",
+    author: "NAFIJ PRO (Fixed)",
     countDown: 5,
     role: 0,
     shortDescription: "Goru meme 🐮",
@@ -27,40 +29,38 @@ module.exports = {
     if (!targetID) return message.reply("🐮 Tag or reply to someone to make them a goru!");
 
     // 🚫 Owner protection
-    if (targetID === "61573866391878") {
-      return message.reply("🚫 You deserve this, not my owner!😙");
+    if (targetID === OWNER_ID) {
+      return message.reply("🚫 You deserve this, not my owner! 😙");
     }
 
-    const baseFolder = path.join(__dirname, "NAFIJ");
+    const baseFolder = path.join(__dirname, "cache");
     const bgPath = path.join(baseFolder, "goru_bg.jpg");
-    const avatarPath = path.join(baseFolder, `avatar_${targetID}.png`);
-    const outputPath = path.join(baseFolder, `goru_result_${targetID}.png`);
+    const outputPath = path.join(baseFolder, `goru_result_${targetID}_${Date.now()}.png`);
 
     try {
-      if (!fs.existsSync(baseFolder)) fs.mkdirSync(baseFolder);
+      if (!fs.existsSync(baseFolder)) fs.mkdirSync(baseFolder, { recursive: true });
 
-      // Download cow image if missing
+      // ✅ Download cow background if missing
       if (!fs.existsSync(bgPath)) {
         const url = "https://raw.githubusercontent.com/alkama844/res/refs/heads/main/image/goru.jpg";
         const res = await axios.get(url, { responseType: "arraybuffer" });
-        fs.writeFileSync(bgPath, res.data);
+        fs.writeFileSync(bgPath, Buffer.from(res.data));
       }
 
-      // Download avatar from Graph API
-      const avatarBuffer = (
-        await axios.get(
-          `https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
-          { responseType: "arraybuffer" }
-        )
-      ).data;
-      fs.writeFileSync(avatarPath, avatarBuffer);
-
-      // Process images
+      // ✅ Process Background
       const bg = await jimp.read(bgPath);
-      const avatar = await jimp.read(avatarPath);
-      avatar.resize(160, 160).circle(); // round avatar
+      
+      // ✅ Using working Graph API & Token
+      const TOKEN = "6628568379|c1e620fa708a1d5696fb991c1bde5662";
+      const avatarURL = `https://graph.facebook.com/${targetID}/picture?width=720&height=720&access_token=${TOKEN}`;
 
-      // Place avatar over cow's face
+      const avatarData = await axios.get(avatarURL, { responseType: "arraybuffer" });
+      const avatar = await jimp.read(Buffer.from(avatarData.data));
+
+      // Goru face-er jonno avatar processing
+      avatar.resize(160, 160).circle();
+
+      // 🧠 Place avatar over cow's face
       const x = 280;
       const y = 90;
       bg.composite(avatar, x, y);
@@ -69,7 +69,7 @@ module.exports = {
 
       // Get user info
       const userInfo = await api.getUserInfo(targetID);
-      const name = userInfo[targetID]?.name || "Someone";
+      const name = userInfo[targetID]?.name || "Goru";
 
       await message.reply(
         {
@@ -78,15 +78,13 @@ module.exports = {
           attachment: fs.createReadStream(outputPath),
         },
         () => {
-          // cleanup
-          fs.unlinkSync(avatarPath);
-          fs.unlinkSync(outputPath);
+          if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
         }
       );
 
     } catch (err) {
       console.error("🐮 Goru command error:", err);
-      return message.reply("❌ Error while turning into goru.");
+      return message.reply("❌ Goru process korte error hoyeche.");
     }
   }
 };
