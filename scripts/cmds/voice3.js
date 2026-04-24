@@ -4,8 +4,8 @@ const path = require("path");
 
 module.exports = {
   config: {
-    name: "voice",
-    aliases: ["vm"], 
+    name: "voice3",
+    aliases: ["vm3"], 
     version: "3.6",
     author: "𝐀𝐫𝐚𝐟𝐚𝐭",
     countDown: 5,
