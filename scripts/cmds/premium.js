@@ -5,13 +5,13 @@ module.exports = {
   config: {
     name: "premium",
     aliases: ["pm"],
-    version: "1.7",
+    version: "1.8",
     author: "NeoKEX & Arijit",
     countDown: 5,
     role: 3,
     description: {
       vi: "Thêm, xóa quyền premium user với thời gian",
-      en: "Add, remove premium user role with time duration"
+      en: "Add, remove premium user role with duration"
     },
     category: "owner",
     guide: {
@@ -25,7 +25,7 @@ module.exports = {
       added: "✅ Đã thêm quyền premium cho %1 người dùng:\n%2",
       missingIdAdd: "⚠ Vui lòng nhập ID hoặc tag",
       removed: "✅ Đã xóa quyền premium cho %1 người dùng:\n%2",
-      listPremium: "🎖️| 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐌𝐞𝐦𝐛𝐞𝐫𝐬:\n\n%1",
+      listPremium: "🌟| 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐌𝐞𝐦𝐛𝐞𝐫𝐬:\n\n%1",
       invalidTime: "⚠ Định dạng thời gian không hợp lệ! (1d, 2h, 30m, permanent)",
       permanent: "Permanent",
       expired: "Expired"
@@ -34,7 +34,7 @@ module.exports = {
       added: "✅ 𝐀𝐝𝐝𝐞𝐝 𝐩𝐫𝐞𝐦𝐢𝐮𝐦 𝐫𝐨𝐥𝐞 𝐟𝐨𝐫 %1 𝐮𝐬𝐞𝐫𝐬:\n%2",
       missingIdAdd: "⚠ 𝐏𝐥𝐞𝐚𝐬𝐞 𝐞𝐧𝐭𝐞𝐫 𝐈𝐃 𝐨𝐫 𝐭𝐚𝐠",
       removed: "✅ 𝐑𝐞𝐦𝐨𝐯𝐞𝐝 𝐩𝐫𝐞𝐦𝐢𝐮𝐦 𝐫𝐨𝐥𝐞 𝐟𝐨𝐫 %1 𝐮𝐬𝐞𝐫𝐬:\n%2",
-      listPremium: "🎖️| 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐌𝐞𝐦𝐛𝐞𝐫𝐬:\n\n%1",
+      listPremium: "🌟| 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐌𝐞𝐦𝐛𝐞𝐫𝐬:\n\n%1",
       invalidTime: "⚠ 𝐈𝐧𝐯𝐚𝐥𝐢𝐝 𝐭𝐢𝐦𝐞 𝐟𝐨𝐫𝐦𝐚𝐭! (1d, 2h, 30m, permanent)",
       permanent: "Permanent",
       expired: "Expired"
@@ -81,11 +81,14 @@ module.exports = {
       return toBoldUnicode(res);
     };
 
+    // --- MongoDB Safe Sync & Auto Cleanup ---
     let isChanged = false;
     for (const uid of [...config.premiumUsers]) {
       const userData = await usersData.get(uid);
+      // Ensure we check MongoDB data directly
       const exp = userData?.data?.premiumExpireTime;
-      if (exp && exp !== null && exp - Date.now() <= 0) {
+      
+      if (exp !== undefined && exp !== null && exp - Date.now() <= 0) {
         config.premiumUsers.splice(config.premiumUsers.indexOf(uid), 1);
         await usersData.set(uid, { ...userData.data, premiumExpireTime: null }, "data");
         isChanged = true;
@@ -115,8 +118,9 @@ module.exports = {
 
         for (const uid of uids) {
           if (!config.premiumUsers.includes(uid)) config.premiumUsers.push(uid);
-          const userData = await usersData.get(uid);
-          await usersData.set(uid, { ...userData?.data, premiumExpireTime: expireTime }, "data");
+          const userData = await usersData.get(uid) || { data: {} };
+          // Direct Update to MongoDB via usersData.set
+          await usersData.set(uid, { ...userData.data, premiumExpireTime: expireTime }, "data");
           const name = await usersData.getName(uid);
           addedDetails.push(`• ${name} (${durationDisplay})`);
         }
