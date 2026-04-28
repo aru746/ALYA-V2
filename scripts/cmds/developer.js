@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "developer",
     aliases: ["dev"],
-    version: "1.3",
+    version: "1.4",
     author: "NeoKEX & Arijit",
     countDown: 5,
     role: 4,
@@ -81,12 +81,13 @@ module.exports = {
       return toBoldUnicode(res);
     };
 
-    // --- Data Persistence & Cleanup Logic ---
+    // --- MongoDB Safe Sync & Auto Cleanup for Developers ---
     let isChanged = false;
     for (const uid of [...config.devUsers]) {
       const userData = await usersData.get(uid);
       const exp = userData?.data?.devExpireTime;
-      if (exp && exp !== null && exp - Date.now() <= 0) {
+      
+      if (exp !== undefined && exp !== null && exp - Date.now() <= 0) {
         config.devUsers.splice(config.devUsers.indexOf(uid), 1);
         await usersData.set(uid, { ...userData.data, devExpireTime: null }, "data");
         isChanged = true;
@@ -116,8 +117,8 @@ module.exports = {
 
         for (const uid of uids) {
           if (!config.devUsers.includes(uid)) config.devUsers.push(uid);
-          const userData = await usersData.get(uid);
-          await usersData.set(uid, { ...userData?.data, devExpireTime: expireTime }, "data");
+          const userData = await usersData.get(uid) || { data: {} };
+          await usersData.set(uid, { ...userData.data, devExpireTime: expireTime }, "data");
           const name = await usersData.getName(uid);
           addedDetails.push(`• ${name} (${durationDisplay})`);
         }
