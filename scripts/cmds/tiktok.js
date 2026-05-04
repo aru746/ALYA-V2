@@ -20,8 +20,8 @@ module.exports = {
     aliases: ["tt"],
     version: "1.0.0",
     author: "Neoaz ゐ",
-    countDown: 3,
-    role: 0,
+    countDown: 5,
+    role: 3,
     description: { en: "Search and download TikTok video" },
     category: "video",
     guide: { en: "{pn} <search query>\n{pn} -v <search query>" }
