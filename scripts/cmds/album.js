@@ -1,283 +1,125 @@
-const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
+const axios = require("axios"), fs = require("fs"), path = require("path");
 
-const baseApiUrl = async () => {
-  const base = await axios.get("https://raw.githubusercontent.com/mahmudx7/HINATA/main/baseApiUrl.json");
-  return base.data.mahmud;
+const mahmud = async () => {
+        const base = await axios.get("https://raw.githubusercontent.com/mahmudx7/HINATA/main/baseApiUrl.json");
+        return base.data.mahmud;
 };
 
-/**
-* @author MahMUD
-* @author: do not delete it
-*/
+module.exports = {
+        config: {
+                name: "album",
+                version: "1.7",
+                author: "MahMUD",
+                countDown: 5,
+                role: 0,
+                category: "media",
+                description: {
+                        bn: "বিভিন্ন ক্যাটাগরির ভিডিও অ্যালবাম দেখুন",
+                        en: "Watch video albums from various categories",
+                        vi: "Xem album video từ các danh mục khác nhau"
+                },
+                guide: {
+                        bn: '{pn} [পৃষ্ঠা] | {pn} add [ক্যাটাগরি] (ভিডিও রিপ্লাই) | {pn} list',
+                        en: '{pn} [page] | {pn} add [category] (reply to video) | {pn} list',
+                        vi: '{pn} [trang] | {pn} add [danh mục] (phản hồi video) | {pn} list'
+                }
+        },
 
-module.exports = { 
-  config: { 
-    name: "album", 
-    version: "1.7", 
-    role: 0, 
-    author: "MahMUD", 
-    category: "media", 
-    guide: { 
-      en: "{p}{n} [page number] (e.g., {p}{n} 2 to view the next page)\n{p}{n} add [category] [URL] - Add a video to a category\n{p}{n} list - View total videos in each category",
-    }, 
-  },
+        langs: {
+                bn: {
+                        noInput: "× বেবি, একটি ক্যাটাগরি দাও অথবা ভিডিওতে রিপ্লাই দাও",
+                        error: "× সমস্যা হয়েছে: %1। প্রয়োজনে Contact MahMUD।",
+                        invalidPage: "× ভুল পৃষ্ঠা! সর্বোচ্চ পৃষ্ঠা: %1",
+                        header: "𝐀𝐯𝐚𝐢𝐥𝐚𝐛𝐥𝐞 𝐀𝐥𝐛𝐮𝐦 𝐕𝐢𝐝𝐞𝐨",
+                        footer: "\n♻ | পৃষ্ঠা [%1/%2]<😘\nℹ | টাইপ করুন !%3 %4 - পরবর্তী পৃষ্ঠা দেখতে।"
+                },
+                en: {
+                        noInput: "× Baby, please specify a category or reply to a video",
+                        error: "× API error: %1. Contact MahMUD for help.",
+                        invalidPage: "× Invalid page! Max page: %1",
+                        header: "𝐀𝐯𝐚𝐢𝐥𝐚𝐛𝐥𝐞 𝐀𝐥𝐛𝐮𝐦 𝐕𝐢𝐝𝐞𝐨",
+                        footer: "\n♻ | 𝐏𝐚𝐠𝐞 [%1/%2]<😘\nℹ | 𝐓𝐲𝐩𝐞 !%3 %4 - 𝐭𝐨 𝐬𝐞𝐞 𝐧𝐞𝐱𝐭 𝐩𝐚𝐠𝐞."
+                },
+                vi: {
+                        noInput: "× Cưng ơi, vui lòng chỉ định danh mục hoặc phản hồi video",
+                        error: "× Lỗi: %1. Liên hệ MahMUD để hỗ trợ.",
+                        invalidPage: "× Trang không hợp lệ! Trang tối đa: %1",
+                        header: "𝐀𝐯𝐚𝐢𝐥𝐚𝐛𝐥𝐞 𝐀𝐥𝐛𝐮𝐦 𝐕𝐢𝐝𝐞𝐨",
+                        footer: "\n♻ | Trang [%1/%2]<😘\nℹ | Nhập !%3 %4 - để xem trang tiếp theo."
+                }
+        },
 
-  onStart: async function ({ api, event, usersData, args }) {     
-     const obfuscatedAuthor = String.fromCharCode(77, 97, 104, 77, 85, 68);  if (module.exports.config.author !== obfuscatedAuthor) { return api.sendMessage("You are not authorized to change the author name.", event.threadID, event.messageID); }
-     const apiUrl = await baseApiUrl();
+        onStart: async function ({ api, event, args, message, getLang }) {
+                const authorName = String.fromCharCode(77, 97, 104, 77, 85, 68);
+                if (this.config.author !== authorName) return api.sendMessage("You are not authorized to change the author name.", event.threadID, event.messageID);
 
-      if (args[0] === "add") {
-        if (!args[1]) {
-        return api.sendMessage("Please specify a category. Usage: !a add [category]", event.threadID, event.messageID);   }
-        const category = args[1].toLowerCase(); if (event.messageReply && event.messageReply.attachments && event.messageReply.attachments.length > 0) {
-        const attachment = event.messageReply.attachments[0];
-        if (attachment.type !== "video") {
-        return api.sendMessage("❌ Only video attachments are allowed.", event.threadID, event.messageID);
-     }
+                try {
+                        const apiBase = await mahmud();
 
-       try {
-        const response = await axios.post("https://api.imgur.com/3/image", {image: attachment.url,type: "url"  },  {headers: {
-        Authorization: "Client-ID"} }   );
-        const imgurLink = response.data?.data?.link;
-        if (!imgurLink) throw new Error("Imgur upload failed");  try {
-        const uploadResponse = await axios.post(`${apiUrl}/api/add`, {  category,  videoUrl: imgurLink,  });
-        return api.sendMessage(uploadResponse.data.message, event.threadID, event.messageID);  } catch (error) {
-        return api.sendMessage(`Failed to upload video.\n${error.response?.data?.error || error.message}`, event.threadID, event.messageID);   }    } catch (error) {
-        return api.sendMessage(`Failed to upload to Imgur.\n${error.message}`, event.threadID, event.messageID);   }
-      }
+                        if (args[0] === "add") {
+                                if (!args[1] || event.type !== "message_reply" || !event.messageReply.attachments.length) return message.reply(getLang("noInput"));
+                                api.setMessageReaction("⏳", event.messageID, () => {}, true);
+                                const imgurRes = await axios.get(`${apiBase.replace(/\/$/, "")}/imgur?url=${encodeURIComponent(event.messageReply.attachments[0].url)}`);
+                                const res = await axios.post(`${apiBase}/api/album2/mahmud/add`, { category: args[1].toLowerCase(), videoUrl: imgurRes.data.link });
+                                api.setMessageReaction("🪽", event.messageID, () => {}, true);
+                                return message.reply(res.data.message);
+                        }
 
-        
-       if (!args[2]) {
-       return api.sendMessage("❌ Please provide a video URL or reply to a video message.", event.threadID, event.messageID);   }
-       const videoUrl = args[2];   try {
-       const response = await axios.post(`${apiUrl}/api/add`, {    category,    videoUrl,  });
-       return api.sendMessage(response.data.message, event.threadID, event.messageID);  } catch (error) {
-       return api.sendMessage(`${error.response?.data?.error || error.message}`, event.threadID, event.messageID);
-     }
+                        if (args[0] === "list") {
+                                api.setMessageReaction("⏳", event.messageID, () => {}, true);
+                                const res = await axios.get(`${apiBase}/api/album2/mahmud/list`);
+                                api.setMessageReaction("🪽", event.messageID, () => {}, true);
+                                return message.reply(res.data.message);
+                        }
 
-        
-     } else if (args[0] === "list") {try {
-       const response = await axios.get(`${apiUrl}/api/album/mahmud/list`);
-       api.sendMessage(response.data.message, event.threadID, event.messageID); } catch (error) {
-       api.sendMessage(`${error.message}`, event.threadID, event.messageID);  } } else {
-       const displayNames = 
-         [
-         "𝐅𝐮𝐧𝐧𝐲 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐈𝐬𝐥𝐚𝐦𝐢𝐜 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐒𝐚𝐝 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐀𝐧𝐢𝐦𝐞 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐋𝐨𝐅𝐈 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐀𝐭𝐭𝐢𝐭𝐮𝐝𝐞 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐇𝐨𝐫𝐧𝐲 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐂𝐨𝐮𝐩𝐥𝐞 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐂𝐚𝐫 𝐄𝐝𝐢𝐭 𝐕𝐢𝐝𝐞𝐨🎀",
-         "𝐁𝐢𝐤𝐞 𝐄𝐝𝐢𝐭 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐋𝐨𝐯𝐞 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐋𝐲𝐫𝐢𝐜𝐬 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐂𝐚𝐭 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝟏𝟖+ 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐌𝐞𝐦𝐞 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐅𝐨𝐨𝐭𝐛𝐚𝐥𝐥 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐁𝐚𝐛𝐲 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐅𝐫𝐢𝐞𝐧𝐝𝐬 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐌𝐨𝐧𝐞𝐲 𝐯𝐢𝐝𝐞𝐨 🎀",
-         "𝐅𝐥𝐨𝐰𝐞𝐫 𝐕𝐢𝐝𝐞𝐨🎀",
-         "𝐍𝐚𝐫𝐮𝐭𝐨 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐃𝐫𝐚𝐠𝐨𝐧 𝐛𝐚𝐥𝐥 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐁𝐥𝐞𝐚𝐜𝐡 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐃𝐞𝐦𝐨𝐧 𝐬𝐲𝐥𝐞𝐫 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐉𝐮𝐣𝐮𝐭𝐬𝐮 𝐊𝐚𝐢𝐬𝐞𝐧 𝐯𝐢𝐝𝐞𝐨 🎀",
-         "𝐒𝐨𝐥𝐨 𝐥𝐞𝐯𝐞𝐥𝐢𝐧𝐠 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐓𝐨𝐤𝐲𝐨 𝐫𝐞𝐯𝐞𝐧𝐠𝐞𝐫 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐁𝐥𝐮𝐞 𝐥𝐨𝐜𝐤 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐂𝐡𝐚𝐢𝐧𝐬𝐚𝐰 𝐦𝐚𝐧 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐃𝐞𝐚𝐭𝐡 𝐧𝐨𝐭𝐞 𝐯𝐢𝐝𝐞𝐨 🎀",
-         "𝐎𝐧𝐞 𝐏𝐢𝐞𝐜𝐞 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐀𝐭𝐭𝐚𝐜𝐤 𝐨𝐧 𝐓𝐢𝐭𝐚𝐧 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐒𝐚𝐤𝐚𝐦𝐨𝐭𝐨 𝐃𝐚𝐲𝐬 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐰𝐢𝐧𝐝 𝐛𝐫𝐞𝐚𝐤𝐞𝐫 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐎𝐧𝐞 𝐩𝐮𝐧𝐜𝐡 𝐦𝐚𝐧 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐀𝐥𝐲𝐚 𝐑𝐮𝐬𝐬𝐢𝐚𝐧 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐁𝐥𝐮𝐞 𝐛𝐨𝐱 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐇𝐮𝐧𝐭𝐞𝐫 𝐱 𝐇𝐮𝐧𝐭𝐞𝐫 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐋𝐨𝐧𝐞𝐫 𝐥𝐢𝐟𝐞 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐇𝐚𝐧𝐢𝐦𝐞 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐍𝐞𝐲𝐦𝐚𝐫 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐌𝐞𝐬𝐬𝐢 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐑𝐨𝐧𝐚𝐥𝐝𝐨 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐕𝐢𝐧𝐢 𝐉𝐫 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐌𝐛𝐚𝐩𝐩𝐞 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐘𝐚𝐦𝐚𝐥 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐑𝐚𝐩𝐢𝐧𝐡𝐚 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐃𝐲𝐛𝐚𝐥𝐚 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐏𝐞𝐥𝐞 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐌𝐚𝐫𝐚𝐝𝐨𝐧𝐚 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐖𝐡𝐢𝐭𝐞 𝟒𝟒𝟒 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐑𝐮𝐨𝐤 𝐟𝐟 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐁𝟐𝐤 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐁𝐧𝐥 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐕𝐢𝐧𝐜𝐞𝐧𝐳𝐨 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐒𝐲𝐛𝐥𝐮𝐬 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐑𝐚𝐢𝐬𝐭𝐚𝐫 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐒𝐦𝐨𝐨𝐭𝐡 𝟒𝟒𝟒 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐀𝐬𝐭𝐚𝐭𝐢𝐧𝐞 𝐕𝐢𝐝𝐞𝐨 🎀",
-         "𝐅𝐅 𝐄𝐬𝐩𝐨𝐫𝐭𝐬 𝐕𝐢𝐝𝐞𝐨🎀",
-         "𝐅𝐫𝐞𝐞 𝐅𝐢𝐫𝐞 𝐕𝐢𝐝𝐞𝐨🎀",
-         "𝐏𝐮𝐛𝐠 𝐕𝐢𝐝𝐞𝐨🎀",
-         "𝐂𝐚𝐥𝐥 𝐨𝐟 𝐃𝐮𝐭𝐲 𝐕𝐢𝐝𝐞𝐨🎀",
-         "𝐂𝐥𝐚𝐬𝐡 𝐨𝐟 𝐂𝐥𝐚𝐧𝐬 𝐕𝐢𝐝𝐞𝐨🎀",
-         "𝐌𝐨𝐛𝐢𝐥𝐞 𝐋𝐞𝐠𝐞𝐧𝐝 𝐕𝐢𝐝𝐞𝐨🎀",
-         "𝐞𝐅𝐨𝐨𝐭𝐛𝐚𝐥𝐥 𝐕𝐢𝐝𝐞𝐨🎀",
-         "𝐌𝐢𝐧𝐞𝐜𝐫𝐚𝐟𝐭 𝐕𝐢𝐝𝐞𝐨🎀",
-         "𝐆𝐭𝐚 𝐕𝐜 𝐕𝐢𝐝𝐞𝐨🎀",
-         "𝐖𝐡𝐞𝐫𝐞 𝐰𝐢𝐧𝐝𝐬 𝐦𝐞𝐞𝐭🎀",
-         "𝐆𝐞𝐧𝐬𝐡𝐢𝐧 𝐈𝐦𝐩𝐚𝐜𝐭🎀"
-        ];
-       const itemsPerPage = 10;
-       const page = parseInt(args[0]) || 1;
-       const totalPages = Math.ceil(displayNames.length / itemsPerPage);
-       if (page < 1 || page > totalPages) {
-       return api.sendMessage(`❌ Invalid page! Please choose between 1 - ${totalPages}.`, event.threadID, event.messageID);
-      }
+                        api.setMessageReaction("⏳", event.messageID, () => {}, true);
+                        const configRes = await axios.get(`${apiBase}/api/album2/mahmud/display`);
+                        const { displayNames, realCategories, captions } = configRes.data;
+                        const page = parseInt(args[0]) || 1, itemsPerPage = 10, totalPages = Math.ceil(displayNames.length / itemsPerPage);
 
-       const startIndex = (page - 1) * itemsPerPage;
-       const endIndex = startIndex + itemsPerPage;
-       const displayedCategories = displayNames.slice(startIndex, endIndex);
-       const message = `𝐀𝐯𝐚𝐢𝐥𝐚𝐛𝐥𝐞 𝐀𝐥𝐛𝐮𝐦 𝐕𝐢𝐝𝐞𝐨\n` +
-       "𐙚━━━━━━━━━━━━━━━━━━━━━ᡣ𐭩\n" +
-       displayedCategories.map((option, index) => `${startIndex + index + 1}. ${option}`).join("\n") +
-       "\n𐙚━━━━━━━━━━━━━━━━━━━━━ᡣ𐭩" +
-      `\n♻ | 𝐏𝐚𝐠𝐞 [${page}/${totalPages}]<😘\nℹ | 𝐓𝐲𝐩𝐞 !album ${page + 1} - 𝐭𝐨 𝐬𝐞𝐞 𝐧𝐞𝐱𝐭 𝐩𝐚𝐠𝐞.`.repeat(page < totalPages);
-       await api.sendMessage(message, event.threadID, (error, info) => {
-       global.GoatBot.onReply.set(info.messageID, { commandName: this.config.name, type: "reply",   messageID: info.messageID,  author: event.senderID,  page,  startIndex,  displayNames,
-     realCategories: 
-       [
-        "funny", "islamic",  "sad",  "anime",  "lofi",  "attitude",  "horny", "couple",  "car", "bike", "love",  "lyrics", "cat", "18+","meme",
-        "football",  "baby", "friend", "money", "flower",  "naruto", "dragon", "bleach", "demon", "jjk", "solo", "tokyo",  "bluelock",  "cman", "deathnote","onepiece", "attack",
-        "sakamoto", "wind",  "onepman","alya", "bluebox",  "hunter", "loner",  "hanime", 
-        "neymar","messi", "ronaldo", "vini", "mbappe",  "yamal",  "rapinha",  "dybala",  "pele",  "maradona",  "white",  "ruok",  "b2k",
-        "bnl",  "vincenzo", "syblus",  "raistar",  "smooth",  "astatine",  "esports",
-        "freefire", "pubg", "cod", "coc", "mlbb",   "efootball",   "minecraft",   "gta",   "wwmeet",    "genshin"                
-       ],
-        
-    captions: 
-      [
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐅𝐮𝐧𝐧𝐲 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <😺",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐈𝐬𝐥𝐚𝐦𝐢𝐜 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <✨",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐒𝐚𝐝 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <😢",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐀𝐧𝐢𝐦𝐞 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐋𝐨𝐅𝐈 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🎶",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐀𝐭𝐭𝐢𝐭𝐮𝐝𝐞 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <☠ ",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐇𝐨𝐫𝐧𝐲 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🥵",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐂𝐨𝐮𝐩𝐥𝐞 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <💑",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐂𝐚𝐫 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌸",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐁𝐢𝐤𝐞 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <😘",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐋𝐨𝐯𝐞 𝐯𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <❤",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐋𝐲𝐫𝐢𝐜𝐬 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🎵",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐂𝐚𝐭 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🐱",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐈𝟖+ 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🥵",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐌𝐞𝐦𝐞 𝐕𝐢𝐝𝐞𝐨 🔥",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐅𝐨𝐨𝐭𝐛𝐚𝐥𝐥 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <⚽",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐁𝐚𝐛𝐲 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🐥",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐅𝐫𝐢𝐞𝐧𝐝𝐬 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <👭",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐌𝐨𝐧𝐞𝐲 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🐥",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐅𝐥𝐨𝐰𝐞𝐫 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐍𝐚𝐫𝐮𝐭𝐨 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐃𝐫𝐚𝐠𝐨𝐧 𝐛𝐚𝐥𝐥 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐁𝐥𝐞𝐚𝐜𝐡 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐃𝐞𝐦𝐨𝐧 𝐬𝐲𝐥𝐞𝐫 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐉𝐮𝐣𝐮𝐭𝐬𝐮 𝐊𝐚𝐢𝐬𝐞𝐧 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐒𝐨𝐥𝐨 𝐥𝐞𝐯𝐞𝐥𝐢𝐧𝐠 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐓𝐨𝐤𝐲𝐨 𝐫𝐞𝐯𝐞𝐧𝐠𝐞𝐫 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐁𝐥𝐮𝐞 𝐥𝐨𝐜𝐤 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐂𝐡𝐚𝐢𝐧𝐬𝐚𝐰 𝐦𝐚𝐧 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐃𝐞𝐚𝐭𝐡 𝐧𝐨𝐭𝐞 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐎𝐧𝐞 𝐏𝐢𝐞𝐜𝐞 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐀𝐭𝐭𝐚𝐜𝐤 𝐨𝐧 𝐓𝐢𝐭𝐚𝐧 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐒𝐚𝐤𝐚𝐦𝐨𝐭𝐨 𝐃𝐚𝐲𝐬 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐰𝐢𝐧𝐝 𝐛𝐫𝐞𝐚𝐤𝐞𝐫 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟", 
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐎𝐧𝐞 𝐩𝐮𝐧𝐜𝐡 𝐦𝐚𝐧 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐀𝐥𝐲𝐚 𝐑𝐮𝐬𝐬𝐢𝐚𝐧 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐁𝐥𝐮𝐞 𝐛𝐨𝐱 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟", 
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐇𝐮𝐧𝐭𝐞𝐫 𝐱 𝐇𝐮𝐧𝐭𝐞𝐫 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",  
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐋𝐨𝐧𝐞𝐫 𝐥𝐢𝐟𝐞 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐇𝐚𝐧𝐢𝐦𝐞 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐍𝐞𝐲𝐦𝐚𝐫 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐌𝐞𝐬𝐬𝐢 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐑𝐨𝐧𝐚𝐥𝐝𝐨 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐕𝐢𝐧𝐢 𝐉𝐫 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐌𝐛𝐚𝐩𝐩𝐞 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐘𝐚𝐦𝐚𝐥 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐑𝐚𝐩𝐢𝐧𝐡𝐚 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐃𝐲𝐛𝐚𝐥𝐚 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐏𝐞𝐥𝐞 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐌𝐚𝐫𝐚𝐝𝐨𝐧𝐚 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐖𝐡𝐢𝐭𝐞 𝟒𝟒𝟒 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐑𝐮𝐨𝐤 𝐟𝐟 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐁𝟐𝐤  𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐁𝐧𝐥 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐕𝐢𝐧𝐜𝐞𝐧𝐳𝐨 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐒𝐲𝐛𝐥𝐮𝐬 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐑𝐚𝐢𝐬𝐭𝐚𝐫 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐒𝐦𝐨𝐨𝐭𝐡 𝟒𝟒𝟒 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐀𝐬𝐭𝐚𝐭𝐢𝐧𝐞 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐅𝐅 𝐄𝐬𝐩𝐨𝐫𝐭𝐬 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <😘",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐅𝐫𝐞𝐞 𝐅𝐢𝐫𝐞 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <😘",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐏𝐮𝐛𝐠 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <😘",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐂𝐚𝐥𝐥 𝐨𝐟 𝐃𝐮𝐭𝐲 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐂𝐥𝐚𝐬𝐡 𝐨𝐟 𝐂𝐥𝐚𝐧𝐬 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐌𝐨𝐛𝐢𝐥𝐞 𝐋𝐞𝐠𝐞𝐧𝐝 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <🌟",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐞𝐅𝐨𝐨𝐭𝐛𝐚𝐥𝐥 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <😘",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐌𝐢𝐧𝐞𝐜𝐫𝐚𝐟𝐭 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <😘",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐆𝐭𝐚 𝐕𝐜 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <😘",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐖𝐡𝐞𝐫𝐞 𝐰𝐢𝐧𝐝𝐬 𝐦𝐞𝐞𝐭 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <😘",
-       "𝐇𝐞𝐫𝐞 𝐲𝐨𝐮𝐫 𝐆𝐞𝐧𝐬𝐡𝐢𝐧 𝐈𝐦𝐩𝐚𝐜𝐭 𝐕𝐢𝐝𝐞𝐨 𝐁𝐚𝐛𝐲 <😘"       ]
-        });
-      }, event.messageID);
-    }
-  },
+                        if (page < 1 || page > totalPages) {
+                                api.setMessageReaction("❌", event.messageID, () => {}, true);
+                                return message.reply(getLang("invalidPage", totalPages));
+                        }
 
-  onReply: async function ({ api, event, Reply }) {
-      api.unsendMessage(Reply.messageID);
-      const reply = parseInt(event.body);
-      const index = reply - 1;
-      if (isNaN(reply) || index < 0 || index >= Reply.realCategories.length) {
-      return api.sendMessage("Please reply with a valid number from the list.", event.threadID, event.messageID);
-    }
+                        const startIndex = (page - 1) * itemsPerPage;
+                        const menu = `${getLang("header")}\n𐙚━━━━━━━━━━━━━━━━━━━━━ᡣ𐭩\n${displayNames.slice(startIndex, startIndex + itemsPerPage).map((name, i) => `${startIndex + i + 1}. ${name}`).join("\n")}\n𐙚━━━━━━━━━━━━━━━━━━━━━ᡣ𐭩${getLang("footer", page, totalPages, this.config.name, page + 1)}`;
 
-      const category = Reply.realCategories[index];
-      const caption = Reply.captions[index];
-      const userID = event.senderID; try {
-      const apiUrl = await baseApiUrl();
-      const response = await axios.get(`${apiUrl}/api/album/mahmud/videos/${category}?userID=${userID}`);
-      if (!response.data.success) {
-      return api.sendMessage(response.data.message, event.threadID, event.messageID);
-    }
+                        api.setMessageReaction("🪽", event.messageID, () => {}, true);
+                        return message.reply(menu, (err, info) => {
+                                global.GoatBot.onReply.set(info.messageID, { commandName: this.config.name, messageID: info.messageID, author: event.senderID, realCategories, captions });
+                        });
+                } catch (err) {
+                        api.setMessageReaction("❌", event.messageID, () => {}, true);
+                        return message.reply(getLang("error", err.response?.data?.error || err.message));
+                }
+        },
 
-      const videoUrls = response.data.videos;
-      if (!videoUrls || videoUrls.length === 0) {
-      return api.sendMessage("❌ | 𝐍𝐨 𝐯𝐢𝐝𝐞𝐨𝐬 𝐟𝐨𝐮𝐧𝐝 𝐟𝐨𝐫 𝐭𝐡𝐢𝐬 𝐜𝐚𝐭𝐞𝐠𝐨𝐫𝐲.", event.threadID, event.messageID);  }
-      const randomVideoUrl = videoUrls[Math.floor(Math.random() * videoUrls.length)];
-      const filePath = path.join(__dirname, "temp_video.mp4");
-      const downloadFile = async (url, filePath) => {
-      const response = await axios({ url, method: "GET", responseType: "stream", headers: { 'User-Agent': 'Mozilla/5.0' }
-     });
+        onReply: async function ({ api, event, Reply, getLang, message }) {
+                if (event.senderID !== Reply.author) return;
+                api.unsendMessage(Reply.messageID);
+                const category = Reply.realCategories[parseInt(event.body) - 1];
+                if (!category) return;
 
-      return new Promise((resolve, reject) => {
-      const writer = fs.createWriteStream(filePath);
-      response.data.pipe(writer);
-      writer.on("finish", resolve);
-      writer.on("error", reject); });
-    };
+                try {
+                        api.setMessageReaction("⏳", event.messageID, () => {}, true);
+                        const apiBase = await mahmud();
+                        const response = await axios.get(`${apiBase}/api/album2/mahmud/videos/${category}?userID=${event.senderID}`);
+                        const randomVideoUrl = response.data.videos[Math.floor(Math.random() * response.data.videos.length)];
+                        const filePath = path.join(__dirname, `cache/album_${Date.now()}.mp4`);
 
-    try {
-     await downloadFile(randomVideoUrl, filePath);
-     api.sendMessage(
-     { body: caption, attachment: fs.createReadStream(filePath) }, event.threadID, () => fs.unlinkSync(filePath), event.messageID);} catch (error) {
-     api.sendMessage("❌ | 𝐅𝐚𝐢𝐥𝐞𝐝 𝐭𝐨 𝐝𝐨𝐰𝐧𝐥𝐨𝐚𝐝 𝐭𝐡𝐞 𝐯𝐢𝐝𝐞𝐨, 🥹error, contact MahMUD", event.threadID, event.messageID); }} catch (error) {
-     api.sendMessage("🥹error, contact MahMUD.", event.threadID, event.messageID);
-    }
-  }
+                        const res = await axios({ url: randomVideoUrl, method: "GET", responseType: "stream", headers: { 'User-Agent': 'Mozilla/5.0' } });
+                        const writer = fs.createWriteStream(filePath);
+                        res.data.pipe(writer);
+
+                        writer.on("finish", () => {
+                                api.setMessageReaction("🪽", event.messageID, () => {}, true);
+                                message.reply({ body: Reply.captions[category] || Reply.captions["default"], attachment: fs.createReadStream(filePath) }, () => { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); });
+                        });
+                        writer.on("error", (err) => message.reply(getLang("error", err.message)));
+                } catch (err) {
+                        api.setMessageReaction("❌", event.messageID, () => {}, true);
+                        return message.reply(getLang("error", err.response?.data?.error || err.message));
+                }
+        }
 };
