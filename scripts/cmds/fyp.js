@@ -47,7 +47,7 @@ module.exports = {
     guide: {
       en: "{p}{n} [keyword]",
     },
-    usePrefix: false // ✅ No prefix needed — works by just typing fyp
+    noPrefix: true
   },
 
   onStart: async function ({ api, event, args }) {
