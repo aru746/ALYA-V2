@@ -1,46 +1,73 @@
-const axios = require("axios");
-
-const baseApiUrl = async () => {
-  const base = await axios.get(
-    "https://raw.githubusercontent.com/mahmudx7/HINATA/main/baseApiUrl.json"
-  );
-  return base.data.mahmud;
-};
-
 module.exports = {
   config: {
-    name: "pp",
-    aliases: ["pfp", "dp", "profile"],
-    version: "1.7",
-    author: "MahMUD",
+    name: "profile",
+    aliases: ["pfp", "pp", "dp"],
+    version: "3.1",
+    author: "Arafat",
     role: 0,
-    category: "media"
+    category: "system",
+    guide: { en: "profile | profile @user | reply profile" },
+    noPrefix: true
   },
 
-  onStart: async function ({ message, event, args }) {
-     const obfuscatedAuthor = String.fromCharCode(77, 97, 104, 77, 85, 68);  
-     if (module.exports.config.author !== obfuscatedAuthor) { return api.sendMessage("You are not authorized to change the author name.", event.threadID, event.messageID); }
-    
-    try {
-      const target =
-        Object.keys(event.mentions || {})[0] ||
-        event.messageReply?.senderID ||
-        args.join(" ") ||
-        event.senderID;
+  onStart: async function ({ api, event, usersData, args }) {
+    return runProfile({ api, event, usersData, args });
+  },
 
-        const apiUrl = `${await baseApiUrl()}/api/pfp?mahmud=${encodeURIComponent(target)}`;
-        const res = await axios.get(apiUrl, {
-        responseType: "stream"
-      });
+  onChat: async function ({ api, event, usersData }) {
+    if (!event.body) return;
 
-        return message.reply({
-        body: "🎀 Here's the profile picture",
-        attachment: res.data
-      });
+    const body = event.body.toLowerCase().trim();
+    if (!["profile", "pfp", "pp", "dp"].includes(body)) return;
 
-     } catch (e) {
-       console.log(e?.response?.status, e?.message);
-       return message.reply("🥹error, contact MahMUD");
-     }
-   }
- };
+    return runProfile({ api, event, usersData, args: [] });
+  }
+};
+
+async function runProfile({ api, event, usersData, args }) {
+  let uid;
+
+  if (event.type === "message_reply") {
+    uid = event.messageReply.senderID;
+  } 
+  else if (event.mentions && Object.keys(event.mentions).length > 0) {
+    uid = Object.keys(event.mentions)[0];
+  } 
+  else if (args?.[0] && /^\d{5,}$/.test(args[0])) {
+    uid = args[0];
+  } 
+  else {
+    uid = event.senderID;
+  }
+
+  let user;
+  try {
+    user = await usersData.get(uid);
+  } catch {
+    user = null;
+  }
+
+  const name = user?.name || "Unknown User";
+
+  // 🔑 Facebook App Access Token
+  const accessToken = "6628568379|c1e620fa708a1d5696fb991c1bde5662";
+
+  const avatar = `https://graph.facebook.com/${uid}/picture?width=720&height=720&access_token=${accessToken}`;
+
+  const msg = `
+╭─❍ PROFILE
+│
+│ 👤 Name : ${name}
+│ 🆔 UID  : ${uid}
+╰─────────────
+`;
+
+  return api.sendMessage(
+    {
+      body: msg,
+      attachment: await global.utils.getStreamFromURL(avatar)
+    },
+    event.threadID,
+    event.messageID
+  );
+}
