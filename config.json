@@ -14,7 +14,7 @@
   "notesLanguage": "change to your language with ISO 639-1 code, available languages: vi (Vietnamese), en (English)",
   "nickNameBot": "𝙰𝙻𝚈𝙰 𝙱𝙾𝚃 ♫︎",
   "prefix": "!",
-  "noPrefix": false,
+  "noPrefix": true,
   "noPrefixNotes": "When true, Bot Admins (role 2) and Developers (role 4) can run commands without the prefix",
   "adminOnly": {
     "enable": false,
@@ -24,17 +24,17 @@
     "61573866391878"
   ],
   "premiumUsers": [
-    "61573866391878"
+    "61573866391878","61589386378981"
   ],
   "devUsers": [
-    "61573866391878"
+    "61573866391878","61589386378981"
   ],
   "notes_premiumUsers": "List of user IDs with premium access (role 3)",
   "notes_devUsers": "List of developer IDs with full access (role 4)",
   "whiteListMode": {
     "enable": false,
     "whiteListIds": [
-      "61573866391878"
+      "61573866391878","61589386378981"
     ],
     "notes": "if you enable this feature, only the ids in the whiteListIds list can use the bot"
   },
