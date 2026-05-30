@@ -157,5 +157,8 @@
     "requestCooldownMs": 60000,
     "errorCacheTtlMs": 300000,
     "notes": "nkx-fca options — see node_modules/nkx-fca/README.md for full documentation"
+  },
+"Arafat": {
+    "api": "https://arafatas.vercel.app"
   }
 }
