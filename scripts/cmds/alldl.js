@@ -32,11 +32,11 @@ module.exports = {
         langs: {
                 bn: {
                         noLink: "× বেবি, একটি সঠিক ভিডিও লিংক দাও অথবা লিংকে রিপ্লাই করো!",
-                        error: "× ভিডিও ডাউনলোড করতে সমস্যা হয়েছে: %1। প্রয়োজনে Contact MahMUD।\n•WhatsApp: 01836298139"
+                        error: "× ভিডিও ডাউনলোড করতে সমস্যা হয়েছে: %1। প্রয়োজনে Contact owner"
                 },
                 en: {
                         noLink: "× Baby, please provide a valid video link or reply to one!",
-                        error: "× Download error: %1. Contact MahMUD for help.\n•WhatsApp: 01836298139"
+                        error: "× Download error: %1. Contact Owner for help."
                 }
         },
 
