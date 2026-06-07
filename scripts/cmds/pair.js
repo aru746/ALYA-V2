@@ -4,7 +4,7 @@ const path = require("path");
 
 module.exports = {
   config: {
-    name: "pair2",
+    name: "pair",
     author: 'Nyx x Ariyan and fixed by Arijit',
     category: "love",
     countDown: 10 // ✅ 10 seconds cooldown added
