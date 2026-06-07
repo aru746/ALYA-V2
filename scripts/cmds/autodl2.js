@@ -120,7 +120,7 @@ module.exports = {
             // Send video
             await api.sendMessage(
                 {
-                    body: `${videoTitle}\n🔗 Link: ${shortUrl || videoUrl}`,
+                    body: `${videoTitle}\n ${shortUrl || videoUrl}`,
                     attachment: fs.createReadStream(filePath)
                 },
                 event.threadID,
