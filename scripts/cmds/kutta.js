@@ -1,94 +1,106 @@
 const fs = require("fs-extra");
 const path = require("path");
 const axios = require("axios");
-const jimp = require("jimp");
+const { createCanvas, loadImage } = require("canvas");
 
-const OWNER_ID = "61573866391878"; // ✅ Your UID
-
-module.exports = {
-  config: {
-    name: "kutta",
-    version: "1.0.5",
-    author: "NAFIJ PRO (Fixed)",
-    countDown: 5,
-    role: 0,
-    shortDescription: "Make someone a kutta 😂",
-    longDescription: "Replaces the white dog's head with a user's avatar",
-    category: "fun",
-    guide: {
-      en: "{pn} @mention or reply to kutta someone",
-    },
+module.exports.config = {
+  name: "kutta",
+  version: "3.2.0",
+  author: "Arijit",
+  cooldowns: 10,
+  role: 0,
+  shortDescription: "Mention দে তারে যারে kutta বানাবি 🐶",
+  longDescription: "Overlay user's avatar onto the body of a dog",
+  category: "fun",
+  guide: {
+    en: "{pn} [reply/mention/none] → Turn into Kutta",
   },
+};
 
-  onStart: async function ({ event, message, api }) {
-    try {
-      let targetID = Object.keys(event.mentions)[0];
-      if (event.type === "message_reply") {
-        targetID = event.messageReply.senderID;
-      }
+module.exports.onStart = async function ({ api, event, message }) {
+  try {
+    const mentions = event.mentions || {};
+    let targetID =
+      Object.keys(mentions)[0] ||
+      (event.messageReply && event.messageReply.senderID) ||
+      event.senderID;
 
-      if (!targetID) {
-        return message.reply("🐶 Tag or reply to someone to turn them into a kutta!");
-      }
+    const senderID = event.senderID;
 
-      if (targetID === event.senderID) {
-        return message.reply("🐶 You can't kutta yourself, bro 💀");
-      }
-
-      // 🛡️ Owner Protection
-      if (targetID === OWNER_ID) {
-        return message.reply("🚫 You can’t make the owner a kutta! Respect the boss 😎");
-      }
-
-      const baseFolder = path.join(__dirname, "cache");
-      const bgPath = path.join(baseFolder, "kutta_bg.jpg");
-      const outputPath = path.join(baseFolder, `kutta_result_${targetID}_${Date.now()}.png`);
-
-      if (!fs.existsSync(baseFolder)) fs.mkdirSync(baseFolder, { recursive: true });
-
-      // 🐶 Auto-download kutta template if not found
-      if (!fs.existsSync(bgPath)) {
-        const kuttaURL = "https://raw.githubusercontent.com/alkama844/res/refs/heads/main/image/kutta.jpeg";
-        const kuttaImg = await axios.get(kuttaURL, { responseType: "arraybuffer" });
-        fs.writeFileSync(bgPath, Buffer.from(kuttaImg.data));
-      }
-
-      const bg = await jimp.read(bgPath);
-      bg.resize(619, 495);
-
-      // ✅ Working Token & API
-      const TOKEN = "6628568379|c1e620fa708a1d5696fb991c1bde5662";
-      const avatarURL = `https://graph.facebook.com/${targetID}/picture?width=720&height=720&access_token=${TOKEN}`;
-
-      const avatarData = await axios.get(avatarURL, { responseType: "arraybuffer" });
-      const avatarImg = await jimp.read(Buffer.from(avatarData.data));
-
-      // Image-ke round shape kora ebong resize kora
-      avatarImg.resize(140, 140).circle(); 
-
-      // 🧠 Position avatar over white dog's face
-      const x = 355; 
-      const y = 305; 
-      bg.composite(avatarImg, x, y);
-
-      await bg.writeAsync(outputPath);
-
-      const userInfo = await api.getUserInfo(targetID);
-      const tagName = userInfo[targetID]?.name || "Someone";
-
-      await message.reply(
-        {
-          body: `🤣🐶 ${tagName} is now a certified kutta!`,
-          mentions: [{ tag: tagName, id: targetID }],
-          attachment: fs.createReadStream(outputPath),
-        },
-        () => {
-          if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-        }
-      );
-    } catch (err) {
-      console.error("❌ Kutta command error:", err);
-      message.reply("❌ Error occurred while processing image.");
+    // 🚫 Owner protection
+    if (targetID === "61573866391878" && senderID !== "61573866391878") {
+      return message.reply("🚫 You deserve this, not my owner! 😙");
     }
-  },
+
+    const base = path.join(__dirname, "..", "resources");
+    if (!fs.existsSync(base)) fs.mkdirSync(base, { recursive: true });
+
+    const bgPath = path.join(base, "kutta_bg.png");
+    const avatarPath = path.join(base, `avatar_${targetID}.png`);
+    const outputPath = path.join(base, `kutta_${targetID}.png`);
+
+    // Download Kutta template if missing
+    if (!fs.existsSync(bgPath)) {
+      const resp = await axios.get(
+        "https://files.catbox.moe/q2c9wl.jpeg",
+        { responseType: "arraybuffer" }
+      );
+      fs.writeFileSync(bgPath, resp.data);
+    }
+
+    // Download avatar
+    const avatarResp = await axios.get(
+      `https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`,
+      { responseType: "arraybuffer" }
+    );
+
+    fs.writeFileSync(avatarPath, avatarResp.data);
+
+    const bg = await loadImage(bgPath);
+    const avatar = await loadImage(avatarPath);
+
+    const canvas = createCanvas(bg.width, bg.height);
+    const ctx = canvas.getContext("2d");
+
+    ctx.drawImage(bg, 0, 0, bg.width, bg.height);
+
+    // Avatar position (goru command-এর default position)
+    const size = 140;
+    const x = 355;
+    const y = 305;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(
+      x + size / 2,
+      y + size / 2,
+      size / 2,
+      0,
+      Math.PI * 2,
+      true
+    );
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(avatar, x, y, size, size);
+    ctx.restore();
+
+    const buffer = canvas.toBuffer("image/png");
+    fs.writeFileSync(outputPath, buffer);
+
+    const userInfo = await api.getUserInfo(targetID);
+    const name = userInfo[targetID]?.name || "Someone";
+
+    await message.reply({
+      body: `🐶 ${name} হলো একটি আসল Kutta 🤣`,
+      mentions: [{ tag: name, id: targetID }],
+      attachment: fs.createReadStream(outputPath),
+    });
+
+    fs.unlinkSync(avatarPath);
+    fs.unlinkSync(outputPath);
+
+  } catch (err) {
+    console.error("Kutta command error:", err);
+    return message.reply("❌ Something went wrong while generating the Kutta image.");
+  }
 };
