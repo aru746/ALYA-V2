@@ -7,7 +7,7 @@ module.exports.config = {
   name: "kutta",
   version: "3.2.0",
   author: "Arijit",
-  cooldowns: 10,
+  cooldowns: 5,
   role: 0,
   shortDescription: "Mention দে তারে যারে kutta বানাবি 🐶",
   longDescription: "Overlay user's avatar onto the body of a dog",
@@ -65,9 +65,9 @@ module.exports.onStart = async function ({ api, event, message }) {
     ctx.drawImage(bg, 0, 0, bg.width, bg.height);
 
     // Avatar position (goru command-এর default position)
-    const size = 140;
-    const x = 355;
-    const y = 305;
+    const size = 125;
+    const x = 285;
+    const y = 380;
 
     ctx.save();
     ctx.beginPath();
