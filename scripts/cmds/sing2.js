@@ -74,9 +74,9 @@ module.exports = {
     name: "sing2",
     version: "3.9",
     author: "Mueid Mursalin Rifat | Fahad Islam",
-    countDown: 10,
+    countDown: 5,
     role: 0,
-    category: "media",
+    category: "music",
     shortDescription: "Download music with HD UI",
     guide: { en: "{pn} <song name>\n{pn} <song name> -a (auto download first result)" }
   },
