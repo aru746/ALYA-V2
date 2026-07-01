@@ -11,7 +11,7 @@ module.exports = {
 
   onChat: async function ({ api, event }) {
     try {
-      const myUID = "61590850943158";
+      const myUID = "61591419964848";
 
       // শুধু normal message হলে
       if (event.type !== "message") return;
