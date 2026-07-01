@@ -17,7 +17,7 @@ module.exports.onStart = async function ({ api, event }) {
         const senderID = event.senderID;
 
         // শুধু owner (তোমার UID) চালাতে পারবে
-        const OWNER = "100069254151118"; // <-- এখানে নিজের UID বসাও
+        const OWNER = "61591419964848"; // <-- এখানে নিজের UID বসাও
         if (senderID !== OWNER) {
             return api.sendMessage(
                 "❌ You don't have enough permission to use this command. Only My Lord can use it.",
