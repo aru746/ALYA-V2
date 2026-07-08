@@ -48,7 +48,6 @@ module.exports = {
 				"🤯": { text: "মাথা গরম 🤯", file: "amiotmkonk.mp3" },
 				"🙃": { text: "উল্টাপাল্টা করো না 🙃", file: "yamate.mp3" },
 				"😘": {text: "উফ কাছে আসো জান", file: "kissdei.mp3"},
-				"🙂": {text: "সেন্টি খাস কেন বলদ 🐸", file: "sentikhas.mp3"},
 				"👀": { text: "ফোকাস ওন কেরিয়ার 🤕", file: "Focus on career.mp3" }
 			};
 
