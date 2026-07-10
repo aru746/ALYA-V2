@@ -129,18 +129,16 @@ const models = {
   "125": "𝐍𝐞𝐨𝐜𝐥𝐚𝐬𝐬𝐢𝐜𝐢𝐬𝐦"
 };
 
-const API_JSON = "https://raw.githubusercontent.com/Arafat-Core/cmds/refs/heads/main/api.json";
-
 module.exports = {
   config: {
     name: "animirror",
-    aliases: ["aniart", "art2"],
+    aliases: ["aniart", "animirror"],
     version: "8.1",
     author: "𝐀𝐫𝐚𝐟𝐚𝐭",
     countDown: 10,
     role: 0,
     shortDescription: "𝐀𝐧𝐢𝐦𝐞 𝐀𝐫𝐭 𝐆𝐞𝐧𝐞𝐫𝐚𝐭𝐨𝐫",
-    category: "imagine",
+    category: "general",
     guide: {
       en: "𝐔𝐬𝐚𝐠𝐞:\n{pn} <𝐦𝐨𝐝𝐞𝐥>\n{pn} 𝐥𝐢𝐬𝐭\n\n𝐑𝐞𝐩𝐥𝐲 𝐭𝐨 𝐢𝐦𝐚𝐠𝐞"
     }
@@ -169,18 +167,19 @@ module.exports = {
 
       const wait = await message.reply(`⏳ 𝐏𝐫𝐨𝐜𝐞𝐬𝐬𝐢𝐧𝐠...\n🎨 ${models[model]}`);
 
-      const apiRes = await axios.get(API_JSON).catch(()=>null);
-      const apiBase = apiRes?.data?.art;
-
-      if(!apiBase){
+      const apiBase = String(global.GoatBot.config.Arafat?.api || "").trim();
+      if (!apiBase) {
         message.unsend(wait.messageID);
-        return message.reply("❌ 𝐀𝐏𝐈 𝐋𝐨𝐚𝐝 𝐅𝐚𝐢𝐥𝐞𝐝");
+        return message.reply("❌ 𝐀𝐏𝐈 𝐜𝐨𝐧𝐟𝐢𝐠 𝐧𝐨𝐭 𝐟𝐨𝐮𝐧𝐝!");
       }
 
-      const res = await axios.post(`${apiBase}/animirror`, {
+      const res = await axios.post(`${apiBase}/art/animirror`, {
         modelNumber: model,
         imageUrl: img
-      }, { timeout: 300000 }).catch(()=>null);
+      }, {
+        headers: { "Content-Type": "application/json" },
+        timeout: 300000
+      }).catch(()=>null);
 
       if(!res || !res.data?.image_url){
         message.unsend(wait.messageID);
