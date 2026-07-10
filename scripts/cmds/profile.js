@@ -55,11 +55,6 @@ async function runProfile({ api, event, usersData, args }) {
   const avatar = `https://graph.facebook.com/${uid}/picture?width=720&height=720&access_token=${accessToken}`;
 
   const msg = `
-╭─❍ PROFILE
-│
-│ 👤 Name : ${name}
-│ 🆔 UID  : ${uid}
-╰─────────────
 `;
 
   return api.sendMessage(
