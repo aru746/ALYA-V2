@@ -5,7 +5,7 @@ module.exports = {
     version: "3.1",
     author: "Arafat",
     role: 0,
-    category: "system",
+    category: "group",
     guide: { en: "profile | profile @user | reply profile" },
     noPrefix: true
   },
