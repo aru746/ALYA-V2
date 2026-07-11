@@ -2,7 +2,7 @@ const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 
-const OWNER_ID = "61573866391878"; // ← Your UID
+const OWNER_ID = "61591262776146"; // ← Your UID
 const CACHE_DIR = path.join(__dirname, "cache");
 fs.ensureDirSync(CACHE_DIR);
 
