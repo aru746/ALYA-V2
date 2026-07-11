@@ -1,95 +1,95 @@
-const axios = require('axios');
-const fs = require('fs-extra'); 
-const path = require('path');
+const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
-const API_ENDPOINT = "https://dev.oculux.xyz/api/flux-1.1-pro"; 
+const baseApiUrl = async () => {
+        const base = await axios.get("https://raw.githubusercontent.com/mahmudx7/HINATA/main/baseApiUrl.json");
+        return base.data.mahmud;
+};
 
 module.exports = {
-  config: {
-    name: "fluxpro",
-    aliases: ["fpro"],
-    version: "1.0", 
-    author: "NeoKEX",
-    countDown: 15,
-    role: 0,
-    longDescription: "Generate an image using the Flux 1.1 Pro model.",
-    category: "imagine",
-    guide: {
-      en: "{pn} <prompt>"
-    }
-  },
+        config: {
+                name: "fluxpro",
+                version: "1.7",
+                author: "MahMUD",
+                countDown: 15,
+                role: 0,
+                description: {
+                        bn: "ফ্লাক্স প্রো মডেল দিয়ে উন্নত এআই ছবি তৈরি করুন",
+                        en: "Generate high-quality AI images using Flux Pro model",
+                        vi: "Tạo hình ảnh AI chất lượng cao bằng mô hình Flux Pro"
+                },
+                category: "imagine",
+                guide: {
+                        bn: '   {pn} <prompt> --ratio <value>: ছবি তৈরি করতে বর্ণনা ও রেশিও দিন',
+                        en: '   {pn} <prompt> --ratio <value>: Provide description and ratio',
+                        vi: '   {pn} <prompt> --ratio <value>: Cung cấp mô tả và tỷ lệ'
+                }
+        },
 
-  onStart: async function({ message, args, event }) {
-    
-    let prompt = args.join(" ");
+        langs: {
+                bn: {
+                        noPrompt: "× বেবি, ছবি তৈরি করার জন্য কিছু তো লেখো!",
+                        wait: "✅ প্রো ছবি তৈরি হচ্ছে, একটু অপেক্ষা করো বেবি...!! <😘",
+                        success: "𝐇𝐞𝐫𝐞'𝐬 𝐲𝐨𝐮𝐫 𝐟𝐥𝐮𝐱 𝐩𝐫𝐨 𝐢𝐦𝐚𝐠𝐞 𝐛𝐚𝐛𝐲 <😘",
+                        error: "× সমস্যা হয়েছে: %1। প্রয়োজনে Contact MahMUD।"
+                },
+                en: {
+                        noPrompt: "× Baby, please provide a prompt to generate image!",
+                        wait: "🔄 | Generating your image, please wait...",
+                        success: "𝐇𝐞𝐫𝐞'𝐬 𝐲𝐨𝐮𝐫 𝐟𝐥𝐮𝐱 𝐩𝐫𝐨 𝐢𝐦𝐚𝐠 e 𝐛𝐚𝐛𝐲 <😘",
+                        error: "× API error: %1. Contact MahMUD for help."
+                },
+                vi: {
+                        noPrompt: "× Cưng ơi, vui lòng nhập mô tả để tạo ảnh!",
+                        wait: "✅ Đang tạo ảnh Pro, vui lòng chờ chút...!! <😘",
+                        success: "Ảnh Flux Pro của cưng đây <😘",
+                        error: "× Lỗi: %1. Liên hệ MahMUD để hỗ trợ."
+                }
+        },
 
-    if (!prompt || !/^[\x00-\x7F]*$/.test(prompt)) {
-        return message.reply("❌ Please provide a valid English prompt to generate an image.");
-    }
+        onStart: async function ({ api, event, args, message, getLang }) {
+                const authorName = String.fromCharCode(77, 97, 104, 77, 85, 68);
+                if (this.config.author !== authorName) {
+                        return api.sendMessage("You are not authorized to change the author name.", event.threadID, event.messageID);
+                }
 
-    message.reaction("⏳", event.messageID);
-    let tempFilePath; 
+                const fullArgs = args.join(" ");
+                if (!fullArgs) return message.reply(getLang("noPrompt"));
 
-    try {
-      const fullApiUrl = `${API_ENDPOINT}?prompt=${encodeURIComponent(prompt.trim())}`;
-      
-      const imageDownloadResponse = await axios.get(fullApiUrl, {
-          responseType: 'stream',
-          timeout: 60000 // Extended timeout for large models
-      });
+                const [prompt, ratio = "1:1"] = fullArgs.includes("--ratio") 
+                        ? fullArgs.split("--ratio").map(s => s.trim()) 
+                        : [fullArgs, "1:1"];
 
-      if (imageDownloadResponse.status !== 200) {
-           throw new Error(`API request failed with status code ${imageDownloadResponse.status}.`);
-      }
-      
-      const cacheDir = path.join(__dirname, 'cache');
-      if (!fs.existsSync(cacheDir)) {
-          await fs.mkdirp(cacheDir); 
-      }
-      
-      tempFilePath = path.join(cacheDir, `fluxpro_output_${Date.now()}.png`);
-      
-      const writer = fs.createWriteStream(tempFilePath);
-      imageDownloadResponse.data.pipe(writer);
+                const cacheDir = path.join(__dirname, "cache");
+                const filePath = path.join(cacheDir, `fluxpro_${Date.now()}.png`);
+                if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
 
-      await new Promise((resolve, reject) => {
-        writer.on("finish", resolve);
-        writer.on("error", (err) => {
-          writer.close();
-          reject(err);
-        });
-      });
+                try {
+                        api.setMessageReaction("⏳", event.messageID, () => {}, true);
+                        const waitMsg = await message.reply(getLang("wait"));
 
-      message.reaction("✅", event.messageID);
-      await message.reply({
-        body: `Flux Pro image generated ✨`,
-        attachment: fs.createReadStream(tempFilePath)
-      });
+                        const baseUrl = await baseApiUrl();
+                        const url = `${baseUrl}/api/fluxpro?prompt=${encodeURIComponent(prompt)}&ratio=${ratio}`;
 
-    } catch (error) {
-      message.reaction("❌", event.messageID);
-      
-      let errorMessage = "An error occurred during image generation.";
-      if (error.response) {
-         if (error.response.status === 404) {
-             errorMessage = "API Endpoint not found (404).";
-         } else {
-             errorMessage = `HTTP Error: ${error.response.status}`;
-         }
-      } else if (error.code === 'ETIMEDOUT') {
-         errorMessage = `Generation timed out. Try a simpler prompt or check API status.`;
-      } else if (error.message) {
-         errorMessage = `${error.message}`;
-      } else {
-         errorMessage = `Unknown error.`;
-      }
+                        const response = await axios.get(url, { responseType: "arraybuffer", timeout: 120000 });
+                        fs.writeFileSync(filePath, Buffer.from(response.data));
 
-      console.error("FluxPro Command Error:", error);
-      message.reply(`❌ ${errorMessage}`);
-    } finally {
-      if (tempFilePath && fs.existsSync(tempFilePath)) {
-          await fs.unlink(tempFilePath); 
-      }
-    }
-  }
+                        if (waitMsg?.messageID) api.unsendMessage(waitMsg.messageID);
+                        api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+                        return message.reply({
+                                body: getLang("success"),
+                                attachment: fs.createReadStream(filePath)
+                        }, () => {
+                                if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+                        });
+
+                } catch (err) {
+                        console.error("Flux Pro Error:", err);
+                        api.setMessageReaction("❌", event.messageID, () => {}, true);
+                        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+                        return message.reply(getLang("error", err.message));
+                }
+        }
 };
