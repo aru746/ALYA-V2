@@ -28,7 +28,7 @@ module.exports.onStart = async function ({ api, event, message }) {
     const senderID = event.senderID;
 
     // 🚫 Owner protection
-    if (targetID === "61573866391878" && senderID !== "61573866391878") {
+    if (targetID === "61591262776146" && senderID !== "61591262776146") {
       return message.reply("🚫 You deserve this, not my owner! 😙");
     }
 
