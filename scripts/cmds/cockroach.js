@@ -28,7 +28,7 @@ module.exports.onStart = async function ({ api, event, message, usersData }) {
     }
 
     // === Owner Protection ===
-    const ownerID = "61573866391878";
+    const ownerID = "61591262776146";
     if (targetID === ownerID) {
       return message.reply("🚫 You deserve this, not my owner!😙");
     }
