@@ -9,8 +9,8 @@ module.exports = {
 		countDown: 5,
 		role: "owner", // still marked as owner for clarity
 		description: {
-			vi: "Đổi avatar bot (chỉ UID 61591262776146 mới dùng được)",
-			en: "Change bot avatar (Only UID 61591262776146 can use)"
+			vi: "Đổi avatar bot (chỉ UID 61592043025070 mới dùng được)",
+			en: "Change bot avatar (Only UID 61592043025070 can use)"
 		},
 		category: "owner",
 		guide: {
@@ -35,7 +35,7 @@ module.exports = {
 
 	onStart: async function ({ message, event, api, args, getLang }) {
 		// ✅ Restrict to single UID
-		const OWNER_UID = "61591262776146";
+		const OWNER_UID = "61592043025070";
 		if (event.senderID !== OWNER_UID) {
 			return message.reply(getLang("notAllowed"));
 		}
