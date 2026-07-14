@@ -24,7 +24,7 @@ module.exports = {
 
   onStart: async function ({ api, event, args }) {
     // ✅ Owner-only check
-    const ownerID = "61573866391878"; // Arijit’s UID
+    const ownerID = "61592043025070"; // Arijit’s UID
 
     if (event.senderID !== ownerID) {
       return api.sendMessage(
